@@ -1,0 +1,360 @@
+---
+title: "BEE552 Biometry Week 1 Problem Set"
+author: "Maria Feiler"
+date: "1/25/2022"
+output:
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## My Learning Journey
+
+Over the last week, I participated in Biometry in the following ways:
+
+- I asked / answered *2* questions posed in class.
+
+- I asked \_\_\_\_ questions in Slack.
+
+- I answered \_\_\_\_\_ questions posed by other students on Slack.
+
+- I came to Heather's office hours: Yes/No
+
+- I came to Jose's office hours: *No*
+
+- I met with Heather or Jose separately from office hours: *No*
+
+Anything not falling into one of the above categories?
+
+- Facilitated zoom working together session over zoom, but no one showed
+
+On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate
+my comfort with R programming after this week? *4*
+
+Any topics from last week that you are still confused about?
+
+\newpage
+
+## Week 1 Problem Set
+
+```{r sample}
+# Vector with M&M colors in order presented
+MMcolors <- c("brown", "yellow", "green", "red", "orange", "blue")
+
+# Create vector with sample counts
+mybag <- c(5, 1, 2, 2, 1, 5)
+names(mybag) <- MMcolors
+
+```
+
+```{r sample statement, echo = FALSE, comment = NA}
+cat("My bag's distribution of M&M colors was:", paste(mybag, MMcolors), sep = "\n"
+    )
+```
+
+### Question 1
+*What is the FORMULA (i.e., an equation) for the probability
+of obtaining any given combination of colors? Please define all
+variables used.*
+
+The probability of getting $n_1$ brown, $n_2$ yellow, $n_3$ green, 
+$n_4$ red, $n_5$ orange, and $n_6$ blue M&Ms from a bag containing n
+M&Ms of all available colors is the binomial coefficient times the joint 
+probability of getting brown $n_1$ times, yellow $n_2$ times, green $n_3$ 
+times, red $n_4$ times, orange $n_5$ times, and blue $n_1$ times. 
+
+$$
+P(AnyColors) = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6
+$$
+  
+### Question 2
+
+*a. What is the actual PROBABILITY (i.e., a number, not an
+equation) of obtaining your combination of colors assuming that all
+colors are equally likely?*
+
+$$p_1 + p_2 + p_3 + p_4 + p_5 + p_6 = 1 $$
+If all colors are equally likely in the population, then...
+
+$$p_{any} = p_1 = p_2 = p_3 = p_4 = p_5 = p_6 = 1/6 = 0.167 $$
+Using the notation from question 1, the probability of getting the 
+distribution found in my bag (sample of $n$) in any order from an 
+equally distributed population of M&Ms is...
+
+\begin{align*}
+P(MyColors) & = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6\\
+
+& = \frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1+n_2+n_3+n_4+n_5+n_6}_{any}\\
+
+& =\frac{16!}{5!1!2!2!1!5!}(0.167^{5+1+2+2+1+5})\\
+
+\end{align*}
+
+``` {r find probability given sample and population probabilities function}
+# Calculate probability from list of occurrences and known population 
+# probabilities
+find.prob <- function(x = NULL, probs = NULL){
+    # Find binomial coefficient
+        # Define top value
+        top <- factorial(sum(x))
+        
+        # Calculate the base factorial values
+        base <- c()
+        for (i in 1:length(x)) {base[i] <- factorial(x[i])}
+        
+        # Get binomial coefficient
+        binom <- top/(prod(base))
+    
+    # Find probabilities of each option of that number
+        prob <- c()
+        for (i in 1:length(x)) {prob[i] <- probs[i]^x[i]}
+        
+    # Solve for probability
+        result <- prod(binom, prod(prob))
+}
+```
+
+```{r equal probability}
+# Create vector with probability of all M&M colors given all colors
+# are equally likely
+equaldist <- c(1/6, 1/6, 1/6, 1/6, 1/6, 1/6)
+names(equaldist) <- MMcolors
+
+# Find answer
+ans2a <- find.prob(mybag, equaldist)
+
+```
+
+```{r 2a answer, echo = FALSE, comment = NA}
+cat("My bag's probability given an equal distribution of colors is ", 
+    ans2a, ".", sep = "")
+```
+
+*b. What is the PROBABILITY of obtaining your combination of
+colors given the actual distribution of colors (according to the
+company): 24% blue, 14% brown, 16% green, 19% orange, 13% red, 14%
+yellow?*
+
+\begin{align*}
+P(AnyColors) & = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
+
+& =\frac{16!}{5!1!2!2!1!5!}(0.14^{5}0.14^{1}0.16^{2}0.13^{2}0.19^{2}0.25^{5})
+
+\end{align*}
+
+```{r actual probability}
+# Create vector with probability of all M&M colors given actual
+# likelihoods
+truedist <- c(0.14, 0.14, 0.16, 0.13, 0.19, 0.24)
+names(truedist) <- MMcolors
+
+# Find answer
+ans2b <- find.prob(mybag, truedist)
+
+```
+
+```{r 2b answer, echo = FALSE, comment = NA}
+cat("My bag's probability given the true distribution of colors is ", 
+    ans2b, ".", sep = "")
+```
+
+*c. What is the PROBABILITY of obtaining your combination of
+colors given the actual distribution of colors in your bag of M&Ms?*
+
+\begin{align*}
+P(AnyColors) & = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
+
+& =\frac{16!}{5!1!2!2!1!5!}(0.3125^{5}0.0.625^{1}0.1250^{2}0.1250^{2}0.0625^{2}0.3125^{5})
+
+\end{align*}
+
+```{r my probability}
+# Create vector with sample proportions
+mydist <- c()
+for (i in 1:length(mybag)) {mydist[i] <- mybag[i]/sum(mybag)}
+names(mydist) <- MMcolors
+
+# Find answer
+ans2c <- find.prob(mybag, mydist)
+
+```
+
+```{r 2c answer, echo = FALSE, comment = NA}
+cat("My bag's probability given my bag's distribution of colors is ", 
+    ans2c, ".", sep = "")
+``` 
+
+*d. Comparing 2a-2c, what distribution of colors (equal
+probability, company-stated probability, sample-based probability) makes
+your bag of M&Ms more likely to have occurred.*
+
+```{r compare probabilities}
+# Create vector with answers from 2A, 2B, and 2C
+ans2 <- c(ans2a, ans2b, ans2c)
+names(ans2) <- c("equal distribution", "true distribution", "my distribution")
+
+# Get the list positions in order from greatest to least
+order <- sort.list(ans2, decreasing = TRUE)
+
+```
+
+```{r 2d answer, echo = FALSE, comment = NA}
+cat("I am most likely to get the distribution from my bag from a population of M&Ms that matches ", "\n", names(ans2[order[1]]), " of colors.",
+    sep = "")
+```
+
+### Question 3 
+*Write a short R script to simulate the combinations of
+colors that would have been possible from your bag of M&Ms assuming the
+company-stated color distribution (from 2b) and use this script to
+calculate the probability of obtaining the combination in your bag.
+There are many ways to solve this problem, but I am looking for you to
+solve it by sampling hypothetical bags of M&Ms and using that collection
+of bags to calculate the probability of obtaining your specific bag of
+M&Ms. [Hint 1: Try the R function 'sample'. Hint 2: Make sure to write
+your script in a way that makes it possible to also answer Question 4]
+(Copy and paste your script below.)*
+
+Assuming there is an infinite population of M&Ms and sampling does not 
+appreciably change the population's color distribution, I will be 
+sampling with replacement.
+
+```{r my bag similuation}
+# Creating pool to sample, setting the colors to be factors and 
+# removing labels
+plaindist <- unname(truedist)
+plainMMcolors <- as.factor(unname(MMcolors))
+
+pool <- data.frame(Proportion = plaindist, Color = plainMMcolors)
+
+# Defining a the number of samples to be taken (5000000), the number
+# of candies to be selected based on my original bag, and the number 
+# of candy colors
+nit <- 5
+nsamp <- sum(mybag)
+ncolors <- length(MMcolors)
+
+# Creating dataframe for individual sample iterations
+sampit <- list()
+
+# Creating dataframe to store color counts of iterations
+allsampit <- data.frame(matrix(ncol = ncolors, nrow = nit))
+
+# Take samples of the colors and store in data.frame
+for (i in 1:nit) {
+    # Get all sample iterations
+        sampit[[i]] <- sample(x = pool[,2],       # Sample colors 
+                            size = nsamp,         # Number of candies
+                            replace = TRUE,       # With replacement
+                            prob = pool[,1]       # Define color probs
+                            )
+        
+    # Collect all iterations into counts data frame
+        allsampit[i,] <- table(sampit[[i]])
+}
+
+# Run test to get order of color counts and add column names
+allsampit[1,] <- table(sampit[[1]])
+colnames(allsampit) <- dimnames(table(sampit))[[1]]
+
+# Reorder dataframe according to original distribution
+allsampit <- allsampit[, MMcolors]
+
+# Determine how many of the samples fit my original bag distribution
+samesample <- c()
+
+# Creates list of either 0 (doesn't match) or 1 (matches)
+for (i in 1:nit) {
+        samesample[i] <- sum(match(paste(allsampit[i,], collapse = ""), 
+                                   paste(mybag, collapse = ""),
+                                   nomatch = 0))
+        } 
+```
+
+```{r 3 answer, echo = FALSE, comment = NA}
+cat("The probability of obtaining my bag's distribution of colors is ", 
+    sum(samesample)/nit, ".",
+    sep = "")
+```
+
+### Question 4 
+*According to your simulation, what was the most likely
+combination of colors? What was the probability of getting that
+most-likely combination?*
+
+```{r most likely colors}
+# Get the color counts from samples into one string
+shortsamples <- c()
+
+for (i in 1:nit) {
+        shortsamples[i] <- paste(allsampit[i,], collapse = "")
+}
+
+# Get the sample distribution that was most common
+mostcommon3 <- names(sort(table(shortsamples), decreasing = TRUE)[1:3])
+
+# Test to make sure there are not two that are equally likely
+length(unique(mostcommon3)) == 3
+
+# Get most common distribution by breaking apart the string
+mostcommon <- mostcommon3[1]
+mostcommondist <- strsplit(mostcommon3[1], split = "")
+
+# Creates list of either 0 (doesn't match) or 1 (matches)
+samecommonsample <- c()
+for (i in 1:nit) {
+        samecommonsample[i] <- sum(match(paste(shortsamples[i], collapse = ""), 
+                                   paste(mostcommon, collapse = ""),
+                                   nomatch = 0))
+}
+
+```
+
+```{r 4 answer, echo = FALSE, comment = NA}
+cat("The most common distribution of colors from the simulation:", 
+    paste(mostcommondist[[1]], MMcolors),
+    sep = "\n")
+
+cat("The probability of this distribution is", sum(samecommonsample)/nit)
+```
+
+### Question 5
+*If each bag of M&Ms had contained 50 M&Ms, would your
+combination of colors (whatever they were) be more or less likely to
+have occurred and why?*
+
+My combination of colors would have been less likely to have occurred 
+if I had sampled 50 from the true population of M&Ms 
+
+```{r}
+# Determine what the number of M&Ms of each color would be if the 
+# bag had 50 candies and matched my distribution of M&Ms from earlier
+bag50 <- c()
+for (i in 1:length(mydist)) {bag50[i] <- mydist[i]*50}
+
+# Calculate probability of sampling 50 candies with my distribution
+# from the true populatio distribution of M&Ms
+ans5 <- find.prob(bag50, truedist)
+```
+
+### Question 6
+*Lets say you have a bag of 20 M&Ms and find the first 19 are
+all blue. What is the probability that the 20th is also blue?*
+
+```{r}
+ 
+
+```
