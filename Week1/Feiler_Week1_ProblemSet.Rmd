@@ -39,7 +39,7 @@ Any topics from last week that you are still confused about?
 
 \newpage
 
-## Week 1 Problem Set
+## Week 1 Problem Set 
 
 ```{r sample}
 # Vector with M&M colors in order presented
@@ -56,7 +56,7 @@ cat("My bag's distribution of M&M colors was:", paste(mybag, MMcolors), sep = "\
     )
 ```
 
-### Question 1
+### Question 1 
 *What is the FORMULA (i.e., an equation) for the probability
 of obtaining any given combination of colors? Please define all
 variables used.*
@@ -73,7 +73,7 @@ P(AnyColors) =
 p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6
 $$
   
-### Question 2
+### Question 2 
 
 *a. What is the actual PROBABILITY (i.e., a number, not an
 equation) of obtaining your combination of colors assuming that all
@@ -354,7 +354,12 @@ ans5 <- find.prob(bag50, truedist)
 *Lets say you have a bag of 20 M&Ms and find the first 19 are
 all blue. What is the probability that the 20th is also blue?*
 
-```{r}
- 
+Assuming that the bag came from the true global population of M&Ms, 
+represented by a distribution presented in question 2b, then the likelihood 
+of selecting another blue would be the same as selecting blue the 
+previous 19 times. This assumes the same as question 4, wherein the 
+selection of one candy does not influence the selection of other 
+candies and the samples are completely independent and not influencing 
+the color distribution of the population significantly. Therefore, the 
+probability of selecting blue is `r truedist["blue"]`.
 
-```
