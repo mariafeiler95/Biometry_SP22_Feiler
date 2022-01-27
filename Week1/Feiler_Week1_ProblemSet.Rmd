@@ -1,5 +1,5 @@
 ---
-title: "BEE552 Biometry Week 1 Problem Set"
+title: "BEE552 Biometry Week 1"
 author: "Maria Feiler"
 date: "1/25/2022"
 output:
@@ -39,7 +39,7 @@ Any topics from last week that you are still confused about?
 
 \newpage
 
-## Week 1 Problem Set 
+## Problem Set 
 
 ```{r sample}
 # Vector with M&M colors in order presented
