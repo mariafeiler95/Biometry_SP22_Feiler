@@ -16,13 +16,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Over the last week, I participated in Biometry in the following ways:
 
-- I asked / answered *2* questions posed in class.
+- I asked / answered *4* questions posed in class.
 
-- I asked \_\_\_\_ questions in Slack.
+- I asked *2* questions in Slack.
 
-- I answered \_\_\_\_\_ questions posed by other students on Slack.
+- I answered *0* questions posed by other students on Slack.
 
-- I came to Heather's office hours: Yes/No
+- I came to Heather's office hours: *Yes*
 
 - I came to Jose's office hours: *No*
 
@@ -36,6 +36,9 @@ On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate
 my comfort with R programming after this week? *4*
 
 Any topics from last week that you are still confused about?
+
+- I would appreciate a look into the stats a little more. How do you get that
+huge factorial expression? 
 
 \newpage
 
@@ -52,7 +55,8 @@ names(mybag) <- MMcolors
 ```
 
 ```{r sample statement, echo = FALSE, comment = NA}
-cat("My bag's distribution of M&M colors was:", paste(mybag, MMcolors), sep = "\n"
+cat("My bag's distribution of M&M colors was:", paste(mybag, MMcolors), 
+    sep = "\n"
     )
 ```
 
@@ -73,6 +77,8 @@ P(AnyColors) =
 p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6
 $$
   
+\newpage
+
 ### Question 2 
 
 *a. What is the actual PROBABILITY (i.e., a number, not an
@@ -145,7 +151,7 @@ company): 24% blue, 14% brown, 16% green, 19% orange, 13% red, 14%
 yellow?*
 
 \begin{align*}
-P(AnyColors) & = 
+P(MyColors) & = 
 \frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
 p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
 
@@ -173,11 +179,12 @@ cat("My bag's probability given the true distribution of colors is ",
 colors given the actual distribution of colors in your bag of M&Ms?*
 
 \begin{align*}
-P(AnyColors) & = 
+P(MyColors) & = 
 \frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
 p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
 
-& =\frac{16!}{5!1!2!2!1!5!}(0.3125^{5}0.0.625^{1}0.1250^{2}0.1250^{2}0.0625^{2}0.3125^{5})
+& =\frac{16!}{5!1!2!2!1!5!}
+(0.3125^{5}0.0.625^{1}0.1250^{2}0.1250^{2}0.0625^{2}0.3125^{5})
 
 \end{align*}
 
@@ -212,9 +219,13 @@ order <- sort.list(ans2, decreasing = TRUE)
 ```
 
 ```{r 2d answer, echo = FALSE, comment = NA}
-cat("I am most likely to get the distribution from my bag from a population of M&Ms that matches ", "\n", names(ans2[order[1]]), " of colors.",
+cat("I am most likely to get the distribution from my bag from a population of M&Ms that matches ",
+    "\n", 
+    names(ans2[order[1]]), " of colors.",
     sep = "")
 ```
+
+\newpage
 
 ### Question 3 
 *Write a short R script to simulate the combinations of
@@ -232,7 +243,7 @@ Assuming there is an infinite population of M&Ms and sampling does not
 appreciably change the population's color distribution, I will be 
 sampling with replacement.
 
-```{r my bag similuation}
+```{r my bag similuation, cache = TRUE}
 # Creating pool to sample, setting the colors to be factors and 
 # removing labels
 plaindist <- unname(truedist)
@@ -240,10 +251,10 @@ plainMMcolors <- as.factor(unname(MMcolors))
 
 pool <- data.frame(Proportion = plaindist, Color = plainMMcolors)
 
-# Defining a the number of samples to be taken (5000000), the number
+# Defining a the number of samples to be taken (100000), the number
 # of candies to be selected based on my original bag, and the number 
 # of candy colors
-nit <- 5
+nit <- 100000
 nsamp <- sum(mybag)
 ncolors <- length(MMcolors)
 
@@ -268,7 +279,7 @@ for (i in 1:nit) {
 
 # Run test to get order of color counts and add column names
 allsampit[1,] <- table(sampit[[1]])
-colnames(allsampit) <- dimnames(table(sampit))[[1]]
+colnames(allsampit) <- dimnames(table(sampit[[1]]))[[1]]
 
 # Reorder dataframe according to original distribution
 allsampit <- allsampit[, MMcolors]
@@ -290,12 +301,14 @@ cat("The probability of obtaining my bag's distribution of colors is ",
     sep = "")
 ```
 
+\newpage
+
 ### Question 4 
 *According to your simulation, what was the most likely
 combination of colors? What was the probability of getting that
 most-likely combination?*
 
-```{r most likely colors}
+```{r most likely colors, cache = TRUE}
 # Get the color counts from samples into one string
 shortsamples <- c()
 
@@ -331,24 +344,57 @@ cat("The most common distribution of colors from the simulation:",
 cat("The probability of this distribution is", sum(samecommonsample)/nit)
 ```
 
+\newpage
+
 ### Question 5
 *If each bag of M&Ms had contained 50 M&Ms, would your
 combination of colors (whatever they were) be more or less likely to
 have occurred and why?*
 
-My combination of colors would have been less likely to have occurred 
-if I had sampled 50 from the true population of M&Ms 
-
 ```{r}
 # Determine what the number of M&Ms of each color would be if the 
 # bag had 50 candies and matched my distribution of M&Ms from earlier
 bag50 <- c()
-for (i in 1:length(mydist)) {bag50[i] <- mydist[i]*50}
+for (i in 1:length(mydist)) {bag50[i] <- round(mydist[i]*50)}
 
 # Calculate probability of sampling 50 candies with my distribution
-# from the true populatio distribution of M&Ms
+# from the true population distribution of M&Ms
 ans5 <- find.prob(bag50, truedist)
 ```
+
+My combination of colors would have been less likely to have occurred 
+if I had sampled 50 from the true population of M&Ms. The probability of 
+getting my distribution in a 16 candy bag is p(MyColors16) = 
+`r formatC(ans2b, format = "e") `. The likelihood of getting my distribution 
+a 50 candy bag is p(MyColors50) = `r formatC(ans5, format = "e") `.
+
+When you compare the mathematical expressions, the difference between the
+two probabilities becomes clear:
+
+The probability of my bag was 
+
+\begin{align*}
+P(MyColors16) & = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
+
+& =\frac{16!}{5!1!2!2!1!5!}(0.14^{5}0.14^{1}0.16^{2}0.13^{2}0.19^{2}0.25^{5})
+
+\end{align*}
+
+while the probability of a bag of 50 candies with my distribution is
+
+\begin{align*}
+P(MyColors50) & = 
+\frac{n!}{n_{1}!n_{2}!n_{3}!n_{4}!n_{5}!n_{6}!}
+p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
+
+& =\frac{50!}{16!3!6!6!3!16!}
+(0.14^{16}0.14^{3}0.16^{6}0.13^{6}0.19^{3}0.25^{16})
+
+\end{align*}
+
+\newpage
 
 ### Question 6
 *Lets say you have a bag of 20 M&Ms and find the first 19 are
@@ -362,4 +408,8 @@ selection of one candy does not influence the selection of other
 candies and the samples are completely independent and not influencing 
 the color distribution of the population significantly. Therefore, the 
 probability of selecting blue is `r truedist["blue"]`.
-
+  
+    
+  
+  
+  
