@@ -20,9 +20,9 @@ Over the last week, I participated in Biometry in the following ways:
 
 - I asked *2* questions in Slack.
 
-- I answered *0* questions posed by other students on Slack.
+- I answered *3* questions posed by other students on Slack.
 
-- I came to Heather's office hours: *Yes*
+- I came to Heather's office hours: *No*
 
 - I came to Jose's office hours: *No*
 
@@ -32,8 +32,12 @@ Anything not falling into one of the above categories?
 
 - Facilitated zoom working together session over zoom, but no one showed
 
+- Communicated with Heather over slack to discuss potential bugs in my code
+
 On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate
-my comfort with R programming after this week? *4*
+my comfort with R programming after this week? 
+
+*4*
 
 Any topics from last week that you are still confused about?
 
@@ -77,7 +81,6 @@ P(AnyColors) =
 p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6
 $$
   
-\newpage
 
 ### Question 2 
 
@@ -125,7 +128,7 @@ find.prob <- function(x = NULL, probs = NULL){
         for (i in 1:length(x)) {prob[i] <- probs[i]^x[i]}
         
     # Solve for probability
-        result <- prod(binom, prod(prob))
+        result <- prod(binom, prod(prob)) 
 }
 ```
 
@@ -225,7 +228,6 @@ cat("I am most likely to get the distribution from my bag from a population of M
     sep = "")
 ```
 
-\newpage
 
 ### Question 3 
 *Write a short R script to simulate the combinations of
@@ -301,7 +303,6 @@ cat("The probability of obtaining my bag's distribution of colors is ",
     sep = "")
 ```
 
-\newpage
 
 ### Question 4 
 *According to your simulation, what was the most likely
@@ -344,7 +345,6 @@ cat("The most common distribution of colors from the simulation:",
 cat("The probability of this distribution is", sum(samecommonsample)/nit)
 ```
 
-\newpage
 
 ### Question 5
 *If each bag of M&Ms had contained 50 M&Ms, would your
@@ -393,8 +393,6 @@ p^{n_1}_1p^{n_2}_2p^{n_3}_3p^{n_4}_4p^{n_5}_5p^{n_6}_6 \\
 (0.14^{16}0.14^{3}0.16^{6}0.13^{6}0.19^{3}0.25^{16})
 
 \end{align*}
-
-\newpage
 
 ### Question 6
 *Lets say you have a bag of 20 M&Ms and find the first 19 are
