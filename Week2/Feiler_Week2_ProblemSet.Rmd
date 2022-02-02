@@ -1,0 +1,138 @@
+---
+title: "BEE552 Biometry Week 2"
+author: "Maria Feiler"
+date: "2/2/2022"
+output:
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## My Learning Journey
+
+Over the last week, I participated in Biometry in the following ways:
+
+- I asked / answered *2* questions posed in class.
+
+- I asked *0* questions in Slack.
+
+- I answered *0* questions posed by other students on Slack.
+
+- I came to Heather's office hours: *No*
+
+- I came to Jose's office hours: *No*
+
+- I met with Heather or Jose separately from office hours: *No*
+
+Anything not falling into one of the above categories?
+
+- 
+
+On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate
+my comfort with R programming after this week? 
+
+*4*
+
+Any topics from last week that you are still confused about?
+
+- 
+
+\newpage
+
+## Problem Set 
+
+### Question 1
+
+*Assume survival data (days from treatment to death) from two groups, a treatment group $(n_T=20)$ and a control/placebo group $(n_C=15)$ as follows:*
+
+```{r treatment and control}
+treatment = c(90, 91, 68, 90, 167, 26, 38, 89, 88, 99, 41, 123, 76, 88, 79, 96, 79, 122, 11, 23) 
+
+control = c(52, 104, 146, 27, 46, 120, 5, 15, 11, 48, 30, 40, 8, 42, 74)
+```
+
+*a. Use a permutation method to test the null hypothesis that the treatment does not change survival time. Report the p-value associated with the two-tailed test of the null hypothesis. If the critical value $\alpha _{c}=0.05$, would you reject the null hypothesis? (Would the observed difference be considered significant [i.e. reject the null hypothesis] if we set $\alpha_{c}=0.01$? What about $\alpha_{c}=0.10$?)*
+
+I will test the means of the two groups. Let $\overline{y}$ represent the mean of the treatment group and $\overline{z}$ represent the mean of the control group. Therefore $\hat{\theta} = \overline{y} - \overline{z}$. If the null is true, then $\hat{\theta} = 0$.
+
+
+``` {r question 1, cache = TRUE}
+# This code was sourced in part from the original poster's updated code: 
+# https://stats.stackexchange.com/questions/176691/running-a-permutation-test-with-different-sample-sizes-in-r/176714
+
+# Calculate the base statistic ybar - zbar
+theta_hat <- mean(treatment) - mean(control)
+
+# Create vector of zeros to compare the sample permutation test statistics against
+dif <- integer(1000)
+
+# Create vector of the differences between the sample permutation's means and the null (0)
+for (i in 1:length(dif)) {
+        samp <- sample(x = c(treatment, control),
+                       replace = FALSE)
+
+        samp_treat <- samp[1:20]
+        samp_con <- samp[21:35]
+        
+        dif[i] <- mean(samp_treat) - mean(samp_con)
+}
+```
+
+```{r echo = FALSE, comment = FALSE}
+# Check the quartiles of the differences
+quantile(dif)
+
+# Get the standard deviation of the differences
+sd(dif)
+
+# Histogram of the differences
+hist(dif, 
+     xlim = c(-60, 60),
+     ylim = c(0, 50),
+     breaks = 100,
+     main = expression(Distribution~of~hat(theta)*"*"),
+     xlab = expression(hat(theta)*"*")
+)
+
+abline(v = theta_hat,
+       col = "blue",
+       lwd = 1.5
+)
+
+text(theta_hat + 2, 25, expression(hat(theta)), col = "blue")
+
+# Get p-value using the abolute differences
+p_value <- sum(abs(dif) > abs(theta_hat))/length(dif)
+
+```
+
+```{r echo = FALSE, comment = NA}
+cat("p-value =", p_value)
+```
+
+At $α_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected", "accepted") `. At $α_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected", "accepted") `. At $α_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected", "accepted") `.
+
+*b. Given the context for the analysis, is 0.05 the best cut-off for significance? Why or why not? What might be an argument for using a different cut-off for significance?*
+
+I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be qidely circulated, this is not nearly a high enough sample size. If this sampel size is all we have, then we need to make sure this treatment is EXTRA good. I would argue that $α_c=0.01$ is the best option of the three provided here. 
+
+### Question 2
+
+*Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. We can do this as follows:*
+
+*1. Sample with replacement for Treatment and calculate the mean of that bootstrapped sample. Store that in a vector.*
+
+*2. Sample with replacement for Control and calculate the mean of that bootstrapped sample. Store that in a vector.*
+
+*3. Take the difference between these two means. Store that in a vector.*
+
+*4. Start back at Step #1, and loop through some number of times.*
+
+*The distribution of the difference is as follows*
+
+$$\overline{Treatment} \space - \space \overline{Control} \space  $$
+
