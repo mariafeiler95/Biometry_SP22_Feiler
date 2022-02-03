@@ -1,7 +1,6 @@
-# Biometry_SP22_Feiler
-Work for Stony Brook University BEE 552 Biometry course Spring 2022. 
+# BEE552 Biometry Spring 2022
 
-Copyright: Maria E. Feiler 2022
+Work for Stony Brook University BEE 552 Biometry course Spring 2022. 
 
 Main Folder
 -
@@ -16,4 +15,8 @@ Weekly Folders
 - .css file for html styling
 - Any cached code chunks or figures
 - .docx for the original instructions
+  
+  
+---
 
+Copyright: Maria E. Feiler 2022
