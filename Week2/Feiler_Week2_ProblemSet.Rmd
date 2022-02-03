@@ -3,19 +3,10 @@ title: "**BEE552 Biometry Week 2**"
 author: "Maria Feiler"
 date: "2/2/2022"
 output:
-editor_options:
-  markdown:
-    wrap: 72
+output:
+  html_document:
+    css: doc.css
 ---
-
-<style type="text/css">
-  body{
-  font-family: cambria;
-  font-size: 12pt;
-}
-</style>
-
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -28,9 +19,9 @@ Over the last week, I participated in Biometry in the following ways:
 
 - I asked / answered **2** questions posed in class.
 
-- I asked **1** questions in Slack.
+- I asked **2** questions in Slack.
 
-- I answered **0** questions posed by other students on Slack.
+- I answered **2** questions posed by other students on Slack.
 
 - I came to Heather's office hours: **Yes**
 
@@ -121,7 +112,7 @@ The p-value of the original sample is `r p_value`. At $α_c=0.05$, the null hypo
 
 I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be qidely circulated, this is not nearly a high enough sample size. If this sample size is all we have, then we need to make sure this treatment is EXTRA good. Expecially if this is a life saving/extending treatment. I would argue that $α_c=0.01$ is the best option of the three provided here.  
 
-### **Question 2**
+### Question 2
 
 **Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. We can do this as follows:**
 

@@ -1,0 +1,358 @@
+---
+title: "BEE552 Biometry Week 2 Lab"
+author: "Maria Feiler"
+date: "2/3/2022"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 6
+    mathjax: null
+    css: doc.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(knitr)
+```
+
+## Confidence Intervals
+
+### My Pennies
+
+```{r my pennies}
+years <- c(1985, 1989, 2004, 1993, 2021, 2021, 2021, 2012, 2002, 1984)
+age <- 2022-years
+
+```
+
+``` {r penny age bootstrap}
+# Number of repeats
+nit <- 100
+
+# Matrix to catch samples
+bootAge <-  matrix(data = NA, 
+                   nrow = nit, 
+                   ncol = length(age),
+                   dimnames = list(c(1:nit),
+                                   c(1:length(age))
+                   )
+)
+
+# Vector to catch medians
+bootMedAge <- c()
+
+# Collect bootstrap samples of penny ages and calculate medians
+for (i in 1:nit) {
+        bootAge[i,] <- sample(x = age,
+                              size = length(age),
+                              replace = TRUE
+                              )
+        bootMedAge[i] <- median(bootAge[i,])
+        
+}
+
+```
+
+```{r confidence interval method 1}
+# Method 1: Estimate the confidence interval taking the quantiles directly from theta hat star
+
+# Get means of teh boostrap samples
+bootAgeMeans <- rowMeans(bootAge)
+
+# Get lower end of the confidence interval
+M1thetaLL <- quantile(bootAgeMeans, prob = 0.025)
+
+# Get higher end of confidence interval
+M1thetaUL <- quantile(bootAgeMeans, prob = 0.975)
+
+```
+
+```{r confidence interval method 2}
+# Method 2: Use the Normal approximation to find the confidence interval
+
+# Calculate theta hat
+ageThetaHat <- mean(bootAgeMeans)
+
+# Calculate the standard error
+sterr <- sd(bootAgeMeans)
+
+# Get lower end of the confidence interval
+M2thetaLL <- ageThetaHat - 1.96*sterr
+
+# Get higher end of confidence interval
+M2thetaUL <- ageThetaHat + 1.96*sterr
+
+```
+
+Using method 1, there is a 95% chance that the confidence interval (`r paste(round(M1thetaLL, digits = 2), ", ", round(M1thetaUL, digits = 2), sep = "")`) contains the true mean age of pennies in circulation.  
+
+Using method 2, there is a 95% chance that the confidence interval (`r paste(round(M2thetaLL, digits = 2), ", ", round(M2thetaUL, digits = 2), sep = "")`) contains the true mean age of pennies in circulation.  
+
+---
+
+**Checkpoint #1**  
+
+The confidence intervals are pretty similar to each other.
+
+---
+
+## Testing Hypotheses Through Permutation
+
+### Carrier Pigeon Flight Speeds
+
+```{r cocks and hens}
+cocks <- c(1359.8, 1355.3, 1355.1, 1353.0, 1349.8, 1348.8, 1345.2)
+hens <- c(1357.5, 1356.4, 1355.1, 1353.5, 1353.2, 1352.5, 1350.0, 1349.8, 1346.2, 1344.9, 1344.4, 1343.9, 1342.6)
+```
+
+```{r cock and hen example 1}
+# Calculate the test statistic (mean(cocks) - mean(hens)) to test if cocks and hens fly at different speeds
+birdThetaHat <- mean(cocks) - mean(hens)
+
+# Create vector of zeros to compare the sample permutation test statistics against
+dif <- integer(1000)
+
+# Create vector of the differences between the sample permutation's means and the null (0)
+for (i in 1:length(dif)) {
+        samp <- sample(x = c(cocks, hens),
+                       replace = FALSE)
+        dif[i] <- mean(samp[1:7]) - mean(samp[8:20])
+}
+
+p_bird <- sum(abs(dif) > abs(birdThetaHat))/length(dif)
+
+```
+
+The difference between cock and hen flying speeds (p = `r round(p_bird, digits = 2)`) `r ifelse(p_bird > 0.05, "are not", "are")` statistically significant given a critical value of 0.05. 
+
+---
+
+**Checkpoint #2**  
+
+Two-tailed because we're just seeing if they're different, which can go either way.
+
+---
+
+```{r cock and hen example 2}
+# Number of repeats
+nit <- 1000
+
+# Define the matrices into which the cock boostrap and hen bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
+bootCocks <- matrix(data = NA, 
+                nrow = nit, 
+                ncol = length(cocks),
+                dimnames = list(c(1:nit),
+                                c(1:length(cocks))
+                                )
+                )
+
+bootHens <- matrix(data = NA, 
+                nrow = nit, 
+                ncol = length(hens),
+                dimnames = list(c(1:nit),
+                                c(1:length(hens))
+                                )
+                )
+bootDiff <- c()
+
+# Run bootstrap for the number of iterations as defined by nit
+for (i in 1:nit) {
+    # Collect bootstrap samples for the cocks 
+        bootCocks[i,] <- sample(x = cocks,
+                            size = length(cocks),
+                            replace = TRUE
+                            )
+        
+    # Collect bootstrap samples for the hens
+        bootHens[i,] <- sample(x = hens,
+                            size = length(hens),
+                            replace = TRUE
+                            )
+        
+    # Collect the difference between the means of the cock and hen bootstrap samples 
+        bootDiff[i] <- mean(bootCocks[[i]]) - mean(bootHens[[i]])
+}
+
+# Difference between cock and hen flying times
+CHtheta <- mean(cocks) - mean(hens)
+
+# Get lower end of the confidence interval
+CHthetaLL <- quantile(bootDiff, prob = 0.025)
+
+# Get higher end of confidence interval
+CHthetaUL <- quantile(bootDiff, prob = 0.975)
+```
+
+There is a 95% chance that the confidence interval (`r paste(round(CHthetaLL, digits = 2), ", ", round(CHthetaUL, digits = 2), sep = "")`) contains the true difference between cock and hen flying speeds. 
+
+---
+
+**Checkpoint #3**
+
+The null hypothesis is that the average flying speeds of cocks and hens are the same, therefore $\overline{Cocks} - \overline{Hens} = 0$.
+
+---
+
+### Tonsil Size and Virus Carrier Status
+
+```{r tonsils table, echo = FALSE, comment = NA}
+# Make distribution of tonsil size and carrier of he virus
+tonsils <- matrix(data = c(497, 19, 560, 29),
+                  nrow = 2,
+                  ncol = 2,
+                  dimnames = list(c("Noncarrier", "Carrier"),
+                                  c("Not Enlarged", "Enlarged"))
+                   )
+
+kable(tonsils)
+
+```
+
+```{r tonsils}
+# Define test statistic as the percent of patients that are carriers of the virus for the enlarged and not enlarged tonsils groups
+tonsilsTestStat <- (tonsils["Carrier","Not Enlarged"]/sum(tonsils[,"Not Enlarged"])) - (tonsils["Carrier","Enlarged"]/sum(tonsils[,"Enlarged"]))
+
+# Create matrix for the raw data
+tonsilsRaw <- matrix(data = NA,
+                     nrow = sum(tonsils[,"Enlarged"], tonsils[,"Not Enlarged"]),
+                     ncol = 2,
+                     dimnames = list(c(1:sum(tonsils[,"Enlarged"], tonsils[,"Not Enlarged"])),
+                                     c("Tonsil Size", "Carrier Status")
+                                     )
+                     )
+
+# Populate matrix using data from the summary tonsils table
+tonsilsRaw[,"Tonsil Size"] <- c(rep("Not Enlarged", sum(tonsils[,"Not Enlarged"])), 
+                                rep("Enlarged", sum(tonsils[,"Enlarged"]))
+                                )
+
+tonsilsRaw[,"Carrier Status"] <- c(rep("Carrier", sum(tonsils["Carrier","Not Enlarged"])), 
+                                   rep("Noncarrier", sum(tonsils["Noncarrier","Not Enlarged"])),
+                                   rep("Carrier", sum(tonsils["Carrier","Enlarged"])), 
+                                   rep("Noncarrier", sum(tonsils["Noncarrier","Enlarged"]))
+                                   )
+
+# Create an array to collect new data sets
+bootTonsils <- array(data = NA,
+                     dim = c(length(tonsilsRaw[,1]),
+                             length(tonsilsRaw[1,]),
+                             nit),
+                     dimnames = list(names(tonsilsRaw[,1]),
+                                     names(tonsilsRaw[1,]),
+                                     1:nit)
+                     )
+
+# nit should still be set to 1000, so 1000 permutations will be conducted
+# To get the permutations of this data set, I will randomly sample the tonsil size column, then the carrier status column, then cbind() them together into a new data set permutation. These will be saved into the bootTonsils array
+
+for (i in 1:nit){
+        bootTonsils[,,i] <- cbind("Tonsil Size" = sample(x = tonsilsRaw[, "Tonsil Size"],           # Sample tonsil size
+                                                         replace = FALSE), 
+                                  "Carrier Status" = sample(x = tonsilsRaw[, "Carrier Status"],     # Sample carrier status
+                                                            replace = FALSE))                       # And bind into array page
+}
+
+# Calculate the test statistic for each permutation
+# For this loop, the goal is a vector of the differences between the proportion of patients with enlarged tonsils who are ALSO carriers and the proportion of partiets with normal tonsils who are ALSO carriers. 
+for (i in 1:nit){
+        thetaTonsils <- c()
+        thetaTonsils[i] <- (sum(as.integer(bootTonsils[,"Carrier Status",i] == "Carrier"         # Subset carriers with
+                                           & bootTonsils[,"Tonsil Size",i] == "Enlarged"))       # large tonsils and 
+                            / sum(as.integer(bootTonsils[,"Tonsil Size",i] == "Enlarged"))       # divide by all enlarged
+                            ) 
+                            -                                                                    # Subtracted by...
+                           (sum(as.integer(bootTonsils[,"Carrier Status",i] == "Carrier"         # The subset carriers with 
+                                           & bootTonsils[,"Tonsil Size",i] == "Not Enlarged"))   # normal tonsils and 
+                            / sum(as.integer(bootTonsils[,"Tonsil Size",i] == "Not Enlarged"))   # divided by all normal
+                            )
+        
+}
+
+p_tonsils <- sum(abs(thetaTonsils) > abs(tonsilsTestStat))/length(thetaTonsils)
+
+```
+  
+The difference in virus carrier status between patients with enlarged and normal tonsils (p = `r round(p_tonsils, digits = 2)`) `r ifelse(p_tonsils > 0.05, "are not", "are")` statistically significant given a critical value of 0.05.  
+
+---
+
+**Checkpoint #4**
+
+Given the full data set...
+```{r true tonsils table, echo = FALSE, comment = NA}
+# Make distribution of tonsil size and carrier of he virus
+tonsilsTrue <- matrix(data = c(497, 19, 560, 29, 269, 24),
+                      nrow = 2,
+                      ncol = 3,
+                      dimnames = list(c("Noncarrier", "Carrier"),
+                                  c("Not Enlarged", "Enlarged", "Greatly Enlarged"))
+                   )
+
+kable(tonsilsTrue)
+
+```
+
+... I would set the test statistic to be the same as before, just including the greatly enlarged sample into the enlarged. I would do this because I want to see if there is any correlation with enlargement at all. If it was significant, I would test to see if there is a difference in carrier status between the normal and greatly enlarged, then again between the enlarged and greatly enlarged. 
+
+---
+
+## Basics of Bootstrap and Jackknife
+
+### Example Using Uniform Distribution
+
+```{r example code}
+# Bootstrap and means
+x<-seq(0,9,by=1)
+table(sample(x,size=length(x),replace=T))
+
+xmeans<-vector(length=1000)
+
+for (i in 1:1000)
+  {
+  xmeans[i]<-mean(sample(x,replace=T))
+  }
+
+hist(xmeans,breaks=30,col="pink")
+abline(v=mean(x),lwd=2)
+
+# Bias and standard error
+bias.boot<-mean(xmeans)-mean(x)
+
+hist(xmeans,breaks=30,col="pink")
+abline(v=mean(x),lwd=5,col="black")
+abline(v=mean(xmeans),lwd=2,col="yellow")
+
+se.boot<-sd(xmeans)
+
+# Confidence intervals
+# Method 1
+LL.boot<-mean(xmeans)-1.96*se.boot
+UL.boot<-mean(xmeans)+1.96*se.boot
+
+# Method 2
+quantile(xmeans,c(0.025,0.975))
+
+# Compare against what we would have gotten through normal distribution theory
+se.normal<-sqrt(var(x)/length(x))
+LL.normal<-mean(x)-qt(0.975,length(x)-1)*se.normal
+UL.normal<-mean(x)+qt(0.975,length(x)-1)*se.normal
+
+```
+  
+---
+
+**Checkpoint #6**
+
+Yes, this makes sense to me. Since the bootstrap will normalize overtime, it reduces the spread of the uniformly distributed original sample.
+
+---
+
+### LSATs and GPAs
+
+```{r}
+
+
+```
+
