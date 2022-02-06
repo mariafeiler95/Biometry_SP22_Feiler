@@ -79,7 +79,7 @@ for (i in 1:1000) {
 }
 ```
 
-```{r 1 answer, echo = FALSE, comment = NA}
+```{r 1 answer, echo = FALSE}
 # Histogram of the differences
 hist(dif, 
      xlim = c(-60, 60),
@@ -113,30 +113,27 @@ The p-value of the original sample is `r p_value`. At $α_c=0.05$, the null hypo
 
 **b. Given the context for the analysis, is 0.05 the best cut-off for significance? Why or why not? What might be an argument for using a different cut-off for significance?**
 
-I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be qidely circulated, this is not nearly a high enough sample size. If this sample size is all we have, then we need to make sure this treatment is EXTRA good. Expecially if this is a life saving/extending treatment. I would argue that $α_c=0.01$ is the best option of the three provided here.  
+I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be widely circulated, this is not nearly a high enough sample size. If this sample size is all we have, then we need to make sure this treatment is EXTRA good. Especially if this is a life saving/extending treatment. I would argue that $α_c=0.01$ is the best option of the three provided here.  
 
 ### Question 2  
 
-**Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. We can do this as follows:**
+**Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. The distribution of the difference of means is $\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)$, where the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ should be $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$.**
 
-1. **Sample with replacement for Treatment and calculate the mean of that bootstrapped sample. Store that in a vector.**
+I tested my bootstrap method for 1000, 10000, 100000, and 1000000 iterations, which produced the following differences between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$:
 
-2. **Sample with replacement for Control and calculate the mean of that bootstrapped sample. Store that in a vector.**
+```{r bootstrap tests, echo = FALSE}
+kable(x = cbind(format(c(1000, 10000, 100000, 1000000), scientific = FALSE), c(0.962, 0.483, 0.418, 0.431)),
+      col.names = c("Iterations", "Differences")
+      )
+```
+  
+Since there are diminishing returns after 100000 iterations, I will use that number of repeats for the bootstrap.
 
-3. **Take the difference between these two means. Store that in a vector.**
-
-4. **Start back at Step #1, and loop through some number of times.**
-
-**The distribution of the difference of means is $\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)$, where the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ should be $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$.**
-
-First, I need to determine the best number of bootstraps. I did this by testing 1000, 10000, 100000, 1000000, and 10000000 iterations.
-
-
-```{r bootstrap test 1000, echo = FALSE, cache = TRUE}
+```{r bootstrap, cache = TRUE}
 # Define number of iterations
-nit <- 1000
+nit <- 100000
 
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
+# Define the matrices into which the treatment bootstrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
 
 bootT <- matrix(data = NA, 
                 nrow = nit, 
@@ -173,56 +170,22 @@ for (i in 1:nit) {
     # Collect the difference between the means of the treatment and control bootstrap samples 
         bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
 }
-
-# Log the difference between the standard error of the bootstrap
-diff <- c()
-
-diff[1] <- (find.st.err(bootT, nit) - find.st.err(bootC, nit)) - sqrt(abs(var(treatment)/length(treatment)-var(control)/length(control)))
 
 ```
 
-```{r bootstrap test 10000, echo = FALSE, cache = TRUE}
-# Define number of iterations
-nit <- 10000
+```{r confirm bootstrap, echo = FALSE}
+# Test that the standard deviation of the difference of the bootstrapped means is close to the squareroot of the difference in variances
+bootTmeans_sd <- sd(rowMeans(bootT)-rowMeans(bootC))
 
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
+treat_con_var <- sqrt(var(treatment)/length(treatment)+var(control)/length(control))
 
-bootT <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(treatment),
-                dimnames = list(c(1:nit),
-                                c(1:length(treatment))
-                                )
-                )
+```
+  
+For this bootstrap run, the difference  between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$ is `r abs(bootTmeans_sd - treat_con_var)`, which is acceptable.
 
-bootC <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(control),
-                dimnames = list(c(1:nit),
-                                c(1:length(control))
-                                )
-                )
-
-bootDiff <- c()
-
-# Run bootstrap for the number of iterations as defined by nit
-for (i in 1:nit) {
-    # Collect bootstrap samples for the treatment 
-        bootT[i,] <- sample(x = treatment,
-                            size = length(treatment),
-                            replace = TRUE
-                            )
-        
-    # Collect bootstrap samples for the control
-        bootC[i,] <- sample(x = control,
-                            size = length(control),
-                            replace = TRUE
-                            )
-        
-    # Collect the difference between the means of the treatment and control bootstrap samples 
-        bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
-}
-
+For questions 2a and 2b, I will define a function for computing the standard error of my bootstrap samples. 
+  
+```{r find.st.err function}
 # Create function to find the standard error given a matrix of bootstrap samples and the number of repeats done in the bootstrap
 find.st.err <- function(samp = NULL, repeats = NULL) {
     # Calculate the means of the bootstrap samples        
@@ -237,230 +200,26 @@ find.st.err <- function(samp = NULL, repeats = NULL) {
         
     # Calculate the standard error
         sigma <- sqrt(sum(temp)/repeats)
-}
-
-
-diff[2] <- (find.st.err(bootT, nit) - find.st.err(bootC, nit)) - sqrt(abs(var(treatment)/length(treatment)-var(control)/length(control)))
-
-```
-
-```{r bootstrap test 100000, echo = FALSE, cache = TRUE}
-# Define number of iterations
-nit <- 100000
-
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
-
-bootT <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(treatment),
-                dimnames = list(c(1:nit),
-                                c(1:length(treatment))
-                                )
-                )
-
-bootC <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(control),
-                dimnames = list(c(1:nit),
-                                c(1:length(control))
-                                )
-                )
-
-bootDiff <- c()
-
-# Run bootstrap for the number of iterations as defined by nit
-for (i in 1:nit) {
-    # Collect bootstrap samples for the treatment 
-        bootT[i,] <- sample(x = treatment,
-                            size = length(treatment),
-                            replace = TRUE
-                            )
-        
-    # Collect bootstrap samples for the control
-        bootC[i,] <- sample(x = control,
-                            size = length(control),
-                            replace = TRUE
-                            )
-        
-    # Collect the difference between the means of the treatment and control bootstrap samples 
-        bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
-}
-
-diff[3] <- (find.st.err(bootT, nit) - find.st.err(bootC, nit)) - sqrt(abs(var(treatment)/length(treatment)-var(control)/length(control)))
-
-```
-
-```{r bootstrap test 1000000, echo = FALSE, cache = TRUE}
-# Define number of iterations
-nit <- 1000000
-
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
-
-bootT <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(treatment),
-                dimnames = list(c(1:nit),
-                                c(1:length(treatment))
-                                )
-                )
-
-bootC <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(control),
-                dimnames = list(c(1:nit),
-                                c(1:length(control))
-                                )
-                )
-
-bootDiff <- c()
-
-# Run bootstrap for the number of iterations as defined by nit
-for (i in 1:nit) {
-    # Collect bootstrap samples for the treatment 
-        bootT[i,] <- sample(x = treatment,
-                            size = length(treatment),
-                            replace = TRUE
-                            )
-        
-    # Collect bootstrap samples for the control
-        bootC[i,] <- sample(x = control,
-                            size = length(control),
-                            replace = TRUE
-                            )
-        
-    # Collect the difference between the means of the treatment and control bootstrap samples 
-        bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
-}
-
-diff[4] <- (find.st.err(bootT, nit) - find.st.err(bootC, nit)) - sqrt(abs(var(treatment)/length(treatment)-var(control)/length(control)))
-
-```
-
-```{r bootstrap test 10000000, echo = FALSE, cache = TRUE}
-
-# Define number of iterations
-nit <- 10000000
-
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
-
-bootT <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(treatment),
-                dimnames = list(c(1:nit),
-                                c(1:length(treatment))
-                                )
-                )
-
-bootC <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(control),
-                dimnames = list(c(1:nit),
-                                c(1:length(control))
-                                )
-                )
-
-bootDiff <- c()
-
-# Run bootstrap for the number of iterations as defined by nit
-for (i in 1:nit) {
-    # Collect bootstrap samples for the treatment 
-        bootT[i,] <- sample(x = treatment,
-                            size = length(treatment),
-                            replace = TRUE
-                            )
-        
-    # Collect bootstrap samples for the control
-        bootC[i,] <- sample(x = control,
-                            size = length(control),
-                            replace = TRUE
-                            )
-        
-    # Collect the difference between the means of the treatment and control bootstrap samples 
-        bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
-}
-
-# Create function to find the standard error given a matrix of bootstrap samples and the number of repeats done in the bootstrap
-find.st.err <- function(samp = NULL, repeats = NULL) {
-    # Calculate the means of the bootstrap samples        
-        means <- rowMeans(samp)
-        
-    # Calculate the mean of the bootstrap means
-        theta <- sum(means)/repeats
-        
-    # Collect the sum of the squared bootstrap means minue theta
-        temp <- c()
-        for (i in 1:repeats) {temp[i] <- (means[i]-theta)^2}
-        
-    # Calculate the standard error
-        sigma <- sqrt(sum(temp)/repeats)
-}
-
-diff[5] <- (find.st.err(bootT, nit) - find.st.err(bootC, nit)) - sqrt(abs(var(treatment)/length(treatment)-var(control)/length(control)))
-
-```
-
-
-
-```{r boostrap}
-# Define number of iterations
-nit <- 100000
-
-# Define the matrices into which the treatment boostrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
-
-bootT <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(treatment),
-                dimnames = list(c(1:nit),
-                                c(1:length(treatment))
-                                )
-                )
-
-bootC <- matrix(data = NA, 
-                nrow = nit, 
-                ncol = length(control),
-                dimnames = list(c(1:nit),
-                                c(1:length(control))
-                                )
-                )
-
-bootDiff <- c()
-
-# Run bootstrap for the number of iterations as defined by nit
-for (i in 1:nit) {
-    # Collect bootstrap samples for the treatment 
-        bootT[i,] <- sample(x = treatment,
-                            size = length(treatment),
-                            replace = TRUE
-                            )
-        
-    # Collect bootstrap samples for the control
-        bootC[i,] <- sample(x = control,
-                            size = length(control),
-                            replace = TRUE
-                            )
-        
-    # Collect the difference between the means of the treatment and control bootstrap samples 
-        bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
 }
 
 ```
   
 **a. Using your bootstrap samples, what is the standard error of the mean for the Treatment group $(\hat{se}_{boot,T})$. How does this compare to $\sqrt{\frac{Var[X_{T}]}{n_{T}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?**
 
-```{r 2a answer}
+```{r 2a answer, echo = FALSE}
 # Find the standard error of the treatment bootstrap
-sterr_treat <- find.st.err(bootT, nit)
+sterr_treat <- sd(rowMeans(bootT))
 
 # Find the standard deviation of the original treatment sample
 sd_treat <- sqrt(var(treatment)/length(treatment))
 
 ```
   
-The standard error of the treatment bootstrap (`r round(sterr_treat, digits = 2)`) is `r ifelse(sterr_treat > sd_treat, "greater than", "less than") ` the standard deviation of the original treatment sample (`r round(sd_treat, digits = 2)`).  
+The standard error of the treatment bootstrap (`r round(sterr_treat, digits = 2)`) is `r ifelse(sterr_treat > sd_treat, "greater than", "less than") ` the standard deviation of the original treatment sample (`r round(sd_treat, digits = 2)`). 
   
 **b. Using your bootstrap samples, what is the standard error of the mean for the Control group $(\hat{se}_{boot,C})$). How does this compare to $\sqrt{\frac{Var[X_{C}]}{n_{C}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?** 
 
-```{r 2b answer}
+```{r 2b answer, echo = FALSE}
 # Find the standard error of the control bootstrap
 sterr_con <- find.st.err(bootC, nit)
 
@@ -473,7 +232,7 @@ The standard error of the control bootstrap (`r round(sterr_con, digits = 2)`) i
   
 **c. Using $(\hat{se}_{boot,T})$ and $(\hat{se}_{boot,C})$, calculate the standard error of the difference in means $(\hat{se}_{boot,diff})$. Note that variances can be added and standard deviations are the square root of the variance.** 
   
-```{r 2c answer}
+```{r 2c answer, echo = FALSE}
 # Calculate the standard error of the difference in means
 sterr_diff <- sqrt(sterr_treat^2 + sterr_con^2)
 
@@ -484,11 +243,14 @@ The standard error of the difference in means is `r round(sterr_diff, digits = 2
 
 **d. Use $\hat{se}_{boot,diff}$ to estimate the 95^th percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.**  
 
-```{r 2d answer}
-# 
+```{r 2d answer, echo = FALSE}
+# Calculate the confidence interval using the standard error of the bootstrap differences and the mean of the bootstrap differences
+upper <- mean(bootDiff)+1.96*sterr_diff
+lower <- mean(bootDiff)-1.96*sterr_diff
 
 ```
-  
+
+The 95^th confidence interval for the difference in means is (`r paste(lower, ", ", lower, sep = ""`).  
 
 **e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95th percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.**  
 
