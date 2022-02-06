@@ -182,27 +182,6 @@ treat_con_var <- sqrt(var(treatment)/length(treatment)+var(control)/length(contr
 ```
   
 For this bootstrap run, the difference  between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$ is `r abs(bootTmeans_sd - treat_con_var)`, which is acceptable.
-
-For questions 2a and 2b, I will define a function for computing the standard error of my bootstrap samples. 
-  
-```{r find.st.err function}
-# Create function to find the standard error given a matrix of bootstrap samples and the number of repeats done in the bootstrap
-find.st.err <- function(samp = NULL, repeats = NULL) {
-    # Calculate the means of the bootstrap samples        
-        means <- rowMeans(samp)
-        
-    # Calculate the mean of the bootstrap means
-        theta <- sum(means)/repeats
-        
-    # Collect the sum of the squared bootstrap means minue theta
-        temp <- c()
-        for (i in 1:repeats) {temp[i] <- (means[i]-theta)^2}
-        
-    # Calculate the standard error
-        sigma <- sqrt(sum(temp)/repeats)
-}
-
-```
   
 **a. Using your bootstrap samples, what is the standard error of the mean for the Treatment group $(\hat{se}_{boot,T})$. How does this compare to $\sqrt{\frac{Var[X_{T}]}{n_{T}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?**
 
@@ -221,7 +200,7 @@ The standard error of the treatment bootstrap (`r round(sterr_treat, digits = 2)
 
 ```{r 2b answer, echo = FALSE}
 # Find the standard error of the control bootstrap
-sterr_con <- find.st.err(bootC, nit)
+sterr_con <- sd(rowMeans(bootC))
 
 # Find the standard deviation of the original control sample
 sd_con <- sqrt(var(control)/length(control))
@@ -241,21 +220,26 @@ sterr_diff <- sqrt(sterr_treat^2 + sterr_con^2)
 The standard error of the difference in means is `r round(sterr_diff, digits = 2)`.  
   
 
-**d. Use $\hat{se}_{boot,diff}$ to estimate the 95^th percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.**  
+**d. Use $\hat{se}_{boot,diff}$ to estimate the 95<sup>th</sup> percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.**  
 
 ```{r 2d answer, echo = FALSE}
 # Calculate the confidence interval using the standard error of the bootstrap differences and the mean of the bootstrap differences
-upper <- mean(bootDiff)+1.96*sterr_diff
-lower <- mean(bootDiff)-1.96*sterr_diff
+upper2d <- mean(bootDiff)+(1.96*sterr_diff)
+lower2d <- mean(bootDiff)-(1.96*sterr_diff)
 
 ```
 
-The 95^th confidence interval for the difference in means is (`r paste(lower, ", ", lower, sep = ""`).  
+The 95^th confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`).  
 
-**e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95th percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.**  
+**e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.**  
 
-```{r 2e answer}
-
+```{r 2e answer, echo = FALSE}
+# Calculate the confidence interval using the quantiles of the bootstrap mean differences
+lower2e <- quantile(bootDiff, probs=0.025)
+upper2e <- quantile(bootDiff, probs=0.975)
 
 ```
 
+The 95<sup>th</sup> confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`).  
+
+### Question 3

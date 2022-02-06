@@ -58,7 +58,7 @@ if (window.hljs) {
 
 
 
-<link rel="stylesheet" href="data:text/css,div%2Emain%2Dcontainer%20%7Bmax%2Dwidth%3A%201600px%20%21important%3B%7Dbody%7Bfont%2Dfamily%3A%20cambria%3Bfont%2Dsize%3A%2012pt%3B%7D" type="text/css" />
+<link rel="stylesheet" href="data:text/css,div%2Emain%2Dcontainer%20%7Bmax%2Dwidth%3A%201600px%20%21important%3B%7Dbody%7Bfont%2Dfamily%3A%20cambria%3Bfont%2Dsize%3A%2014pt%3B%7D" type="text/css" />
 
 
 
@@ -231,14 +231,7 @@ for (i in 1:1000) {
 </div>
 <div id="question-2" class="section level3">
 <h3>Question 2</h3>
-<p><strong>Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. We can do this as follows:</strong></p>
-<ol style="list-style-type: decimal">
-<li><p><strong>Sample with replacement for Treatment and calculate the mean of that bootstrapped sample. Store that in a vector.</strong></p></li>
-<li><p><strong>Sample with replacement for Control and calculate the mean of that bootstrapped sample. Store that in a vector.</strong></p></li>
-<li><p><strong>Take the difference between these two means. Store that in a vector.</strong></p></li>
-<li><p><strong>Start back at Step #1, and loop through some number of times.</strong></p></li>
-</ol>
-<p><strong>The distribution of the difference of means is <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)\)</span>, where the standard deviation of <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control}\)</span> should be <span class="math inline">\(\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}\)</span>.</strong></p>
+<p><strong>Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. The distribution of the difference of means is <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)\)</span>, where the standard deviation of <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control}\)</span> should be <span class="math inline">\(\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}\)</span>.</strong></p>
 <p>I tested my bootstrap method for 1000, 10000, 100000, and 1000000 iterations, which produced the following differences between the the standard deviation of <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control}\)</span> and <span class="math inline">\(\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}\)</span>:</p>
 <table>
 <thead>
@@ -266,7 +259,7 @@ for (i in 1:1000) {
 </tr>
 </tbody>
 </table>
-<p>Therefore, since there are diminishing returns after 100000 iterations, I will use that number of repeats for the bootstrap.</p>
+<p>Since there are diminishing returns after 100000 iterations, I will use that number of repeats for the bootstrap.</p>
 <pre class="r"><code># Define number of iterations
 nit &lt;- 100000
 
@@ -308,43 +301,19 @@ for (i in 1:nit) {
         bootDiff[i] &lt;- mean(bootT[i,]) - mean(bootC[i,])
 }</code></pre>
 <p>For this bootstrap run, the difference between the the standard deviation of <span class="math inline">\(\overline{Treatment} \space - \space \overline{Control}\)</span> and <span class="math inline">\(\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}\)</span> is 0.3916903, which is acceptable.</p>
-<p>For the following questions, I will define a function for computing the standard error of my bootstrap samples.</p>
-<pre class="r"><code># Create function to find the standard error given a matrix of bootstrap samples and the number of repeats done in the bootstrap
-find.st.err &lt;- function(samp = NULL, repeats = NULL) {
-    # Calculate the means of the bootstrap samples        
-        means &lt;- rowMeans(samp)
-        
-    # Calculate the mean of the bootstrap means
-        theta &lt;- sum(means)/repeats
-        
-    # Collect the sum of the squared bootstrap means minue theta
-        temp &lt;- c()
-        for (i in 1:repeats) {temp[i] &lt;- (means[i]-theta)^2}
-        
-    # Calculate the standard error
-        sigma &lt;- sqrt(sum(temp)/repeats)
-}</code></pre>
 <p><strong>a. Using your bootstrap samples, what is the standard error of the mean for the Treatment group <span class="math inline">\((\hat{se}_{boot,T})\)</span>. How does this compare to <span class="math inline">\(\sqrt{\frac{Var[X_{T}]}{n_{T}}}\)</span>? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes “decent”)?</strong></p>
-<pre class="r"><code># Find the standard error of the treatment bootstrap
-sterr_treat &lt;- sd(rowMeans(bootT))
-
-# Find the standard deviation of the original treatment sample
-sd_treat &lt;- sqrt(var(treatment)/length(treatment))</code></pre>
 <p>The standard error of the treatment bootstrap (8.18) is less than the standard deviation of the original treatment sample (8.38).</p>
 <p><strong>b. Using your bootstrap samples, what is the standard error of the mean for the Control group <span class="math inline">\((\hat{se}_{boot,C})\)</span>). How does this compare to <span class="math inline">\(\sqrt{\frac{Var[X_{C}]}{n_{C}}}\)</span>? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes “decent”)?</strong></p>
-<pre class="r"><code># Find the standard error of the control bootstrap
-sterr_con &lt;- find.st.err(bootC, nit)
-
-# Find the standard deviation of the original control sample
-sd_con &lt;- sqrt(var(control)/length(control))</code></pre>
 <p>The standard error of the control bootstrap (10.61) is less than the standard deviation of the original control sample (10.96).</p>
 <p><strong>c. Using <span class="math inline">\((\hat{se}_{boot,T})\)</span> and <span class="math inline">\((\hat{se}_{boot,C})\)</span>, calculate the standard error of the difference in means <span class="math inline">\((\hat{se}_{boot,diff})\)</span>. Note that variances can be added and standard deviations are the square root of the variance.</strong></p>
-<pre class="r"><code># Calculate the standard error of the difference in means
-sterr_diff &lt;- sqrt(sterr_treat^2 + sterr_con^2)</code></pre>
 <p>The standard error of the difference in means is 13.39.</p>
-<p><strong>d. Use <span class="math inline">\(\hat{se}_{boot,diff}\)</span> to estimate the 95^th percentile confidence interval on the difference in means, assuming the interval is given by <span class="math inline">\((mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})\)</span>.</strong></p>
-<pre class="r"><code># </code></pre>
-<p><strong>e. We’re now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95th percentile confidence interval for the difference in mean survival days <span class="math inline">\(\overline{Treatment}-\overline{Control}\)</span> based on the quantiles of the bootstrapped samples.</strong></p>
+<p><strong>d. Use <span class="math inline">\(\hat{se}_{boot,diff}\)</span> to estimate the 95<sup>th</sup> percentile confidence interval on the difference in means, assuming the interval is given by <span class="math inline">\((mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})\)</span>.</strong></p>
+<p>The 95^th confidence interval for the difference in means is (1.8, 54.31).</p>
+<p><strong>e. We’re now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days <span class="math inline">\(\overline{Treatment}-\overline{Control}\)</span> based on the quantiles of the bootstrapped samples.</strong></p>
+<p>The 95<sup>th</sup> confidence interval for the difference in means is (1.03, 53.5).</p>
+</div>
+<div id="question-3" class="section level3">
+<h3>Question 3</h3>
 </div>
 </div>
 
