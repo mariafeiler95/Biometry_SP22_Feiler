@@ -1,5 +1,5 @@
 ---
-title: "BEE552 Biometry Week 2 Lab"
+title: "**BEE552 Biometry Week 2 Lab**"
 author: "Maria Feiler"
 date: "2/3/2022"
 output:
