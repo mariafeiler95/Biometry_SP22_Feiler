@@ -4,5 +4,9 @@ body{
         }
 
 p.ans{
-       margin-left: 20px; 
+        margin-left: 20px; 
+}
+
+pre{
+        margin-left: 20px;
 }

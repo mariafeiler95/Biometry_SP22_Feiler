@@ -92,14 +92,13 @@ hist(dif,
      )
 
 abline(v = theta_hat,
-       col = "blue",
-       lwd = 1.5
+       lwd = 1.5,
+       lty = "dashed"
        )
 
 text(x = theta_hat + 2, 
      y = 25, 
-     labels = expression(hat(theta)), 
-     col = "blue"
+     labels = expression(hat(theta))
      )
 
 # Get p-value using the absolute differences
@@ -107,19 +106,20 @@ p_value <- sum(abs(dif) > abs(theta_hat))/length(dif)
 
 ```
 
+
 <p class="ans">
-The quartiles of the permutations were `r paste(round(quantile(dif), digits = 2), "(", c("0%", "25%", "50%", "75%", "100%"), ")", sep = "") `.
-The permutations had an average `r paste(round(mean(dif), digits = 2), "±", round(sd(dif), digits = 2))` difference from the null hypothesis.
+The quartiles of the permutations were `r paste(round(quantile(dif), digits = 2), "(", c("0%", "25%", "50%", "75%", "100%"), ")", sep = "")`.
+The difference of the permutation means had an average `r paste(round(mean(dif), digits = 2), "�", round(sd(dif), digits = 2))` difference from the null hypothesis.
 </p>
 
 <p class="ans">
-The p-value of the original sample is `r p_value`. At $α_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected", "accepted") `. At $α_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected", "accepted") `. At $α_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected", "accepted") `.
+The p-value of the original sample is `r p_value`. At $\alpha_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`. At $\alpha_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`. At $\alpha_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`.
 </p>
 
 *b. Given the context for the analysis, is 0.05 the best cut-off for significance? Why or why not? What might be an argument for using a different cut-off for significance?*
 
 <p class="ans">
-I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be widely circulated, this is not nearly a high enough sample size. If this sample size is all we have, then we need to make sure this treatment is EXTRA good. Especially if this is a life saving/extending treatment. I would argue that $α_c=0.01$ is the best option of the three provided here.  
+I argue that 0.05 not a sufficient cutoff for this experiment this presents the issue of circulating a drug/treatment that is falsely proclaimed to extend life, or falsely rejecting the null hypothesis. In my opinion, a 5% chance that the treatment is falsely assumed to be effective is too high for a treatment that extends life, whereas a 1% chance is more acceptable for a matter of this significance. In addition, I argue that the sample size of the experiment testing the treatment is too small, which contributes to my opinion that a significance value of 0.05 is not sufficient to ensure a difference between the treatment and the control groups. 
 </p>
 
 ### Question 2  
@@ -248,25 +248,26 @@ lower2d <- mean(bootDiff)-(1.96*bootDiffStErr)
 ```
 
 <p class="ans">
-The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`).
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples is zero) falls `r ifelse(lower2d < 0 & 0 < upper2d, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
 </p>
 
 *e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.*  
 
 ```{r 2e answer}
 # Calculate the confidence interval using the quantiles of the bootstrap mean differences
-lower2e <- quantile(bootDiff, probs = 0.025)
-upper2e <- quantile(bootDiff, probs = 0.975)
+lower2e <- unname(quantile(bootDiff, probs = 0.025))
+upper2e <- unname(quantile(bootDiff, probs = 0.975))
 
 ```
 
 <p class="ans">
-The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`).
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples is zero) falls `r ifelse(lower2e < 0 & 0 < upper2e, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
 </p>
 
 ### Question 3
-*Briefly (??? a paragraph, with drawings as needed) explain the relationship between testing a hypothesis and estimating an effect size with a confidence interval. Can you use an effect size and its confidence interval to test a hypothesis? If so, how? Why might providing an effect size and its confidence interval be preferable to providing just a p-value?*
+*Briefly (less than a paragraph, with drawings as needed) explain the relationship between testing a hypothesis and estimating an effect size with a confidence interval. Can you use an effect size and its confidence interval to test a hypothesis? If so, how? Why might providing an effect size and its confidence interval be preferable to providing just a p-value?*
 
 <p class="ans">
-Need to ask Heather, check Isabelle Notes
+Testing a hypothesis and estimating the effect size with a confidence interval are both ways to determine if your data are significant. In the case of the treatment and control groups presented in Question 1, we are testing if the differences between the treatment and control groups are significant determining if the means of the  bootstrapped samples of treatment and control survival days differ significantly from the null hypothesis that $\overline{Treatment} \space - \space \overline{Control} \space = \space 0$. With a hypothesis test, you would receive a p-value that tells you if the null is accepted or rejected. Though that is helpful, it only tells you that your treatment is different from your control without describing the relationship. By including a confidence interval, you can also understand what your underlying population looks like. The difference between the original treatment sample and the control sample is not significant (p = `r t.test(treatment, control)$p.value`), but we again are learning very little about the actual relationship between these two conditions and survival time.For the bootstrap done in Question 2, our null hypothesis is signfiicantly different than the bootstrap sample mean difference distribution (p = `r t.test(bootDiff, mu = 0)$p.value`), which still tells us very little. However, the confidence interval of our bootstrap sample difference distribution (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`) tells us that those who received the treatment survived for a longer time than the control. This gets us closer to the actual relationship between the treatment and survival time. 
 </p>
+
