@@ -1,10 +1,10 @@
 ---
-title: "**BEE552 Biometry Week 2**"
+title: "BEE552 Biometry Week 2"
 author: "Maria Feiler"
 date: "2/2/2022"
 output:
   html_document:
-    css: doc.css
+    css: w2psdoc.css
 ---
 
 ```{r setup, include=FALSE}
@@ -45,7 +45,7 @@ Any topics from last week that you are still confused about?
 
 ### Question 1
 
-**Assume survival data (days from treatment to death) from two groups, a treatment group $(n_T=20)$ and a control/placebo group $(n_C=15)$ as follows:**
+*Assume survival data (days from treatment to death) from two groups, a treatment group $(n_T=20)$ and a control/placebo group $(n_C=15)$ as follows:*
 
 ```{r treatment and control}
 treatment = c(90, 91, 68, 90, 167, 26, 38, 89, 88, 99, 41, 123, 76, 88, 79, 96, 79, 122, 11, 23) 
@@ -53,9 +53,11 @@ treatment = c(90, 91, 68, 90, 167, 26, 38, 89, 88, 99, 41, 123, 76, 88, 79, 96, 
 control = c(52, 104, 146, 27, 46, 120, 5, 15, 11, 48, 30, 40, 8, 42, 74)
 ```
 
-**a. Use a permutation method to test the null hypothesis that the treatment does not change survival time. Report the p-value associated with the two-tailed test of the null hypothesis. If the critical value $\alpha _{c}=0.05$, would you reject the null hypothesis? (Would the observed difference be considered significant [i.e. reject the null hypothesis] if we set $\alpha_{c}=0.01$? What about $\alpha_{c}=0.10$?)**
+*a. Use a permutation method to test the null hypothesis that the treatment does not change survival time. Report the p-value associated with the two-tailed test of the null hypothesis. If the critical value $\alpha _{c}=0.05$, would you reject the null hypothesis? (Would the observed difference be considered significant [i.e. reject the null hypothesis] if we set $\alpha_{c}=0.01$? What about $\alpha_{c}=0.10$?)*
 
+<p class="ans">
 I will test the means of the two groups. Let $\overline{y}$ represent the mean of the treatment group and $\overline{z}$ represent the mean of the control group. Therefore $\hat{\theta} = \overline{y} - \overline{z}$. If the null is true, then $\hat{\theta} = 0$.
+</p>
 
 ``` {r question 1, cache = TRUE}
 # This code was sourced in part from the original poster's updated code: 
@@ -105,29 +107,38 @@ p_value <- sum(abs(dif) > abs(theta_hat))/length(dif)
 
 ```
 
+<p class="ans">
 The quartiles of the permutations were `r paste(round(quantile(dif), digits = 2), "(", c("0%", "25%", "50%", "75%", "100%"), ")", sep = "") `.
-The permutations' had an average `r paste(round(mean(dif), digits = 2), "±", round(sd(dif), digits = 2))` difference from the null hypothesis.  
+The permutations had an average `r paste(round(mean(dif), digits = 2), "±", round(sd(dif), digits = 2))` difference from the null hypothesis.
+</p>
 
-The p-value of the original sample is `r p_value`. At $α_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected", "accepted") `. At $α_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected", "accepted") `. At $α_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected", "accepted") `.  
+<p class="ans">
+The p-value of the original sample is `r p_value`. At $α_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected", "accepted") `. At $α_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected", "accepted") `. At $α_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected", "accepted") `.
+</p>
 
+*b. Given the context for the analysis, is 0.05 the best cut-off for significance? Why or why not? What might be an argument for using a different cut-off for significance?*
 
-**b. Given the context for the analysis, is 0.05 the best cut-off for significance? Why or why not? What might be an argument for using a different cut-off for significance?**
-
+<p class="ans">
 I argue that this 0.05 not a sufficient cutoff for this experiment because the sample sizes are so small. With a sample size of 35, that can accurately represent a population of only 350 patients, assuming that samples are at least 10% of the population based on standard practice. Assuming this drug is meant to be widely circulated, this is not nearly a high enough sample size. If this sample size is all we have, then we need to make sure this treatment is EXTRA good. Especially if this is a life saving/extending treatment. I would argue that $α_c=0.01$ is the best option of the three provided here.  
+</p>
 
 ### Question 2  
 
-**Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. The distribution of the difference of means is $\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)$, where the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ should be $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$.**
+*Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. The distribution of the difference of means is $\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)$, where the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ should be $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$.*
 
+<p class="ans">
 I tested my bootstrap method for 1000, 10000, 100000, and 1000000 iterations, which produced the following differences between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$:
+</p>
 
 ```{r bootstrap tests, echo = FALSE}
 kable(x = cbind(format(c(1000, 10000, 100000, 1000000), scientific = FALSE), c(0.962, 0.483, 0.418, 0.431)),
       col.names = c("Iterations", "Differences")
       )
 ```
-  
+
+<p class="ans">  
 Since there are diminishing returns after 100000 iterations, I will use that number of repeats for the bootstrap.
+</p>
 
 ```{r bootstrap, cache = TRUE}
 # Define number of iterations
@@ -173,73 +184,89 @@ for (i in 1:nit) {
 
 ```
 
-```{r confirm bootstrap, echo = FALSE}
+```{r confirm bootstrap}
 # Test that the standard deviation of the difference of the bootstrapped means is close to the squareroot of the difference in variances
-bootTmeans_sd <- sd(rowMeans(bootT)-rowMeans(bootC))
+bootDiffSD <- sd(rowMeans(bootT)-rowMeans(bootC))
 
-treat_con_var <- sqrt(var(treatment)/length(treatment)+var(control)/length(control))
+coVar <- sqrt(var(treatment)/length(treatment)+var(control)/length(control))
 
 ```
   
-For this bootstrap run, the difference  between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$ is `r abs(bootTmeans_sd - treat_con_var)`, which is acceptable.
+<p class="ans"> 
+For this bootstrap run, the difference  between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$ is `r round(abs(bootDiffSD - coVar), digits = 2)`, which is acceptable.
+</p>
   
-**a. Using your bootstrap samples, what is the standard error of the mean for the Treatment group $(\hat{se}_{boot,T})$. How does this compare to $\sqrt{\frac{Var[X_{T}]}{n_{T}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?**
+*a. Using your bootstrap samples, what is the standard error of the mean for the Treatment group $(\hat{se}_{boot,T})$. How does this compare to $\sqrt{\frac{Var[X_{T}]}{n_{T}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?*
 
-```{r 2a answer, echo = FALSE}
+```{r 2a answer}
 # Find the standard error of the treatment bootstrap
-sterr_treat <- sd(rowMeans(bootT))
+bootTStErr <- sd(rowMeans(bootT))
 
 # Find the standard deviation of the original treatment sample
-sd_treat <- sqrt(var(treatment)/length(treatment))
+treatmentVar <- sqrt(var(treatment)/length(treatment))
 
 ```
   
-The standard error of the treatment bootstrap (`r round(sterr_treat, digits = 2)`) is `r ifelse(sterr_treat > sd_treat, "greater than", "less than") ` the standard deviation of the original treatment sample (`r round(sd_treat, digits = 2)`). 
+<p class="ans">
+The standard error of the treatment bootstrap (`r round(bootTStErr, digits = 2)`) is `r ifelse(bootTStErr > treatmentVar, "greater than", "less than") ` the standard deviation of the original treatment sample (`r round(treatmentVar, digits = 2)`).
+</p>
   
-**b. Using your bootstrap samples, what is the standard error of the mean for the Control group $(\hat{se}_{boot,C})$). How does this compare to $\sqrt{\frac{Var[X_{C}]}{n_{C}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?** 
+*b. Using your bootstrap samples, what is the standard error of the mean for the Control group $(\hat{se}_{boot,C})$). How does this compare to $\sqrt{\frac{Var[X_{C}]}{n_{C}}}$? Approximately how many bootstrap samples are required to get a decent estimate (you define what constitutes "decent")?*
 
-```{r 2b answer, echo = FALSE}
+```{r 2b answer}
 # Find the standard error of the control bootstrap
-sterr_con <- sd(rowMeans(bootC))
+bootCStErr <- sd(rowMeans(bootC))
 
 # Find the standard deviation of the original control sample
-sd_con <- sqrt(var(control)/length(control))
+controlVar <- sqrt(var(control)/length(control))
 
 ```
   
-The standard error of the control bootstrap (`r round(sterr_con, digits = 2)`) is `r ifelse(sterr_con > sd_con, "greater than", "less than") ` the standard deviation of the original control sample (`r round(sd_con, digits = 2)`).  
+<p class="ans">
+The standard error of the control bootstrap (`r round(bootCStErr, digits = 2)`) is `r ifelse(bootCStErr > controlVar, "greater than", "less than") ` the standard deviation of the original control sample (`r round(controlVar, digits = 2)`).
+</p>
+
+*c. Using $(\hat{se}_{boot,T})$ and $(\hat{se}_{boot,C})$, calculate the standard error of the difference in means $(\hat{se}_{boot,diff})$. Note that variances can be added and standard deviations are the square root of the variance.* 
   
-**c. Using $(\hat{se}_{boot,T})$ and $(\hat{se}_{boot,C})$, calculate the standard error of the difference in means $(\hat{se}_{boot,diff})$. Note that variances can be added and standard deviations are the square root of the variance.** 
-  
-```{r 2c answer, echo = FALSE}
+```{r 2c answer}
 # Calculate the standard error of the difference in means
-sterr_diff <- sqrt(sterr_treat^2 + sterr_con^2)
+bootDiffStErr <- sqrt(bootTStErr^2 + bootCStErr^2)
 
 ```
   
-The standard error of the difference in means is `r round(sterr_diff, digits = 2)`.  
-  
+<p class="ans">
+The standard error of the difference in means is `r round(bootDiffStErr, digits = 2)`.
+</p>
 
-**d. Use $\hat{se}_{boot,diff}$ to estimate the 95<sup>th</sup> percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.**  
+*d. Use $\hat{se}_{boot,diff}$ to estimate the 95<sup>th</sup> percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.* 
 
-```{r 2d answer, echo = FALSE}
+```{r 2d answer}
 # Calculate the confidence interval using the standard error of the bootstrap differences and the mean of the bootstrap differences
-upper2d <- mean(bootDiff)+(1.96*sterr_diff)
-lower2d <- mean(bootDiff)-(1.96*sterr_diff)
+upper2d <- mean(bootDiff)+(1.96*bootDiffStErr)
+lower2d <- mean(bootDiff)-(1.96*bootDiffStErr)
 
 ```
 
-The 95^th confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`).  
+<p class="ans">
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`).
+</p>
 
-**e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.**  
+*e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.*  
 
-```{r 2e answer, echo = FALSE}
+```{r 2e answer}
 # Calculate the confidence interval using the quantiles of the bootstrap mean differences
-lower2e <- quantile(bootDiff, probs=0.025)
-upper2e <- quantile(bootDiff, probs=0.975)
+lower2e <- quantile(bootDiff, probs = 0.025)
+upper2e <- quantile(bootDiff, probs = 0.975)
 
 ```
 
-The 95<sup>th</sup> confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`).  
+<p class="ans">
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`).
+</p>
 
 ### Question 3
+*Briefly (??? a paragraph, with drawings as needed) explain the relationship between testing a hypothesis and estimating an effect size with a confidence interval. Can you use an effect size and its confidence interval to test a hypothesis? If so, how? Why might providing an effect size and its confidence interval be preferable to providing just a p-value?*
+
+<p class="ans">
+Need to ask Heather, check Isabelle Notes
+</p>
