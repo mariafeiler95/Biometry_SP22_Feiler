@@ -3,41 +3,57 @@ title: "BEE552 Biometry Week 2"
 author: "Maria Feiler"
 date: "2/2/2022"
 output:
+  word_document: default
   html_document:
     css: w2psdoc.css
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(knitr)
+library(MASS)
+library(moments)
+
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
 ```
 
 ## My Learning Journey
 
-Over the last week, I participated in Biometry in the following ways:
+*Over the last week, I participated in Biometry in the following ways:*
 
+<p class = "ans">
 - I asked / answered **2** questions posed in class.
 
 - I asked **2** questions in Slack.
 
 - I answered **2** questions posed by other students on Slack.
 
-- I came to Heather's office hours: **Yes**
+- I came to Heather's office hours: **No**
 
 - I came to Jose's office hours: **Yes**
 
 - I met with Heather or Jose separately from office hours: **No**
+</p>
 
-Anything not falling into one of the above categories?
+*Anything not falling into one of the above categories?*  
 
-- 
+<p class = "ans">
+**No**
+</p>
 
-On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate
-my comfort with R programming after this week? **5**
+*On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate my comfort with R programming after this week?* 
 
-Any topics from last week that you are still confused about?
+<p class = "ans">
+**5**
+</p> 
 
+*Any topics from last week that you are still confused about?*
+
+<p class = "ans">
 - I tried to do a nested for loop to automate the bootstrap tests, and for the life in me I couldn't figure it out. How would you do it? 
+</p>
 
 \newpage
 
@@ -48,7 +64,8 @@ Any topics from last week that you are still confused about?
 *Assume survival data (days from treatment to death) from two groups, a treatment group $(n_T=20)$ and a control/placebo group $(n_C=15)$ as follows:*
 
 ```{r treatment and control}
-treatment = c(90, 91, 68, 90, 167, 26, 38, 89, 88, 99, 41, 123, 76, 88, 79, 96, 79, 122, 11, 23) 
+treatment = c(90, 91, 68, 90, 167, 26, 38, 89, 88, 99, 41, 123, 76, 88, 79, 96, 79, 
+              122, 11, 23) 
 
 control = c(52, 104, 146, 27, 46, 120, 5, 15, 11, 48, 30, 40, 8, 42, 74)
 ```
@@ -61,7 +78,8 @@ I will test the means of the two groups. Let $\overline{y}$ represent the mean o
 
 ``` {r question 1, cache = TRUE}
 # This code was sourced in part from the original poster's updated code: 
-# https://stats.stackexchange.com/questions/176691/running-a-permutation-test-with-different-sample-sizes-in-r/176714
+# https://stats.stackexchange.com/questions/176691/running-a-permutation-test-with-
+# different-sample-sizes-in-r/176714
 
 # Calculate the base statistic ybar - zbar
 theta_hat <- mean(treatment) - mean(control)
@@ -69,7 +87,8 @@ theta_hat <- mean(treatment) - mean(control)
 # Create vector of zeros to compare the sample permutation test statistics 
 dif <- c()
 
-# Create vector of the differences between the sample permutation's means and the null (0)
+# Create vector of the differences between the sample permutation's means and the 
+# null (0)
 for (i in 1:1000) {
         samp <- sample(x = c(treatment, control),
                        replace = FALSE)
@@ -105,12 +124,9 @@ text(x = theta_hat + 2,
 p_value <- sum(abs(dif) > abs(theta_hat))/length(dif)
 
 ```
-
-
-<p class="ans">
+  
 The quartiles of the permutations were `r paste(round(quantile(dif), digits = 2), "(", c("0%", "25%", "50%", "75%", "100%"), ")", sep = "")`.
-The difference of the permutation means had an average `r paste(round(mean(dif), digits = 2), "±", round(sd(dif), digits = 2))` difference from the null hypothesis.
-</p>
+The difference of the permutation means had an average `r round(mean(dif), digits = 2)` &plusmn; `r round(sd(dif), digits = 2)` difference from the null hypothesis.
 
 <p class="ans">
 The p-value of the original sample is `r p_value`. At $\alpha_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`. At $\alpha_c=0.01$, the null hypothesis is `r ifelse(p_value > 0.01, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`. At $\alpha_c=0.10$, the null hypothesis is `r ifelse(p_value > 0.1, "rejected, and the patients who recieved the treatment did not survive significantly longer than their control counterparts", "accepted, and the patients who recieved the treatment survived significantly longer than their control counterparts")`.
@@ -122,6 +138,8 @@ The p-value of the original sample is `r p_value`. At $\alpha_c=0.05$, the null 
 I argue that 0.05 not a sufficient cutoff for this experiment this presents the issue of circulating a drug/treatment that is falsely proclaimed to extend life, or falsely rejecting the null hypothesis. In my opinion, a 5% chance that the treatment is falsely assumed to be effective is too high for a treatment that extends life, whereas a 1% chance is more acceptable for a matter of this significance. In addition, I argue that the sample size of the experiment testing the treatment is too small, which contributes to my opinion that a significance value of 0.05 is not sufficient to ensure a difference between the treatment and the control groups. 
 </p>
 
+\newpage
+
 ### Question 2  
 
 *Answer Question 1 using nonparametric bootstrap rather than permutation. Calculate confidence intervals for the difference in means between the two groups using bootstrap sampling. The distribution of the difference of means is $\overline{Treatment} \space - \space \overline{Control} \space \sim \space N \left( E[X_{T}]-E[X_{C}] \space, \space \frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}} \right)$, where the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ should be $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$.*
@@ -132,10 +150,10 @@ I tested my bootstrap method for 1000, 10000, 100000, and 1000000 iterations, wh
 
 ```{r bootstrap tests, echo = FALSE}
 kable(x = cbind(format(c(1000, 10000, 100000, 1000000), scientific = FALSE), c(0.962, 0.483, 0.418, 0.431)),
-      col.names = c("Iterations", "Differences")
+      col.names = c("Iterations", "Differences"),
+      caption = "Number of Bootstrap Iterations and the Resulting Difference Between the Standard Deviation of the Difference in Means and the Covariance of the Original Samples"
       )
 ```
-
 <p class="ans">  
 Since there are diminishing returns after 100000 iterations, I will use that number of repeats for the bootstrap.
 </p>
@@ -144,7 +162,9 @@ Since there are diminishing returns after 100000 iterations, I will use that num
 # Define number of iterations
 nit <- 100000
 
-# Define the matrices into which the treatment bootstrap and control bootstrap samples will be stored, and the vector in which the differences between the means will be stored.
+# Define the matrices into which the treatment bootstrap and control bootstrap samples 
+# will be stored, and the vector in which the differences between the means will be 
+# stored.
 
 bootT <- matrix(data = NA, 
                 nrow = nit, 
@@ -178,20 +198,21 @@ for (i in 1:nit) {
                             replace = TRUE
                             )
         
-    # Collect the difference between the means of the treatment and control bootstrap samples 
+    # Collect the difference between the means of the treatment and control bootstrap 
+    # samples 
         bootDiff[i] <- mean(bootT[i,]) - mean(bootC[i,])
 }
 
 ```
 
 ```{r confirm bootstrap}
-# Test that the standard deviation of the difference of the bootstrapped means is close to the squareroot of the difference in variances
+# Test that the standard deviation of the difference of the bootstrapped means is 
+# close to the square root of the difference in variances
 bootDiffSD <- sd(rowMeans(bootT)-rowMeans(bootC))
 
 coVar <- sqrt(var(treatment)/length(treatment)+var(control)/length(control))
 
 ```
-  
 <p class="ans"> 
 For this bootstrap run, the difference  between the the standard deviation of $\overline{Treatment} \space - \space \overline{Control}$ and $\sqrt{\frac{Var[X_{T}]}{n_{T}}+\frac{Var[X_{C}]}{n_{C}}}$ is `r round(abs(bootDiffSD - coVar), digits = 2)`, which is acceptable.
 </p>
@@ -206,7 +227,6 @@ bootTStErr <- sd(rowMeans(bootT))
 treatmentVar <- sqrt(var(treatment)/length(treatment))
 
 ```
-  
 <p class="ans">
 The standard error of the treatment bootstrap (`r round(bootTStErr, digits = 2)`) is `r ifelse(bootTStErr > treatmentVar, "greater than", "less than") ` the standard deviation of the original treatment sample (`r round(treatmentVar, digits = 2)`).
 </p>
@@ -221,7 +241,6 @@ bootCStErr <- sd(rowMeans(bootC))
 controlVar <- sqrt(var(control)/length(control))
 
 ```
-  
 <p class="ans">
 The standard error of the control bootstrap (`r round(bootCStErr, digits = 2)`) is `r ifelse(bootCStErr > controlVar, "greater than", "less than") ` the standard deviation of the original control sample (`r round(controlVar, digits = 2)`).
 </p>
@@ -233,7 +252,6 @@ The standard error of the control bootstrap (`r round(bootCStErr, digits = 2)`) 
 bootDiffStErr <- sqrt(bootTStErr^2 + bootCStErr^2)
 
 ```
-  
 <p class="ans">
 The standard error of the difference in means is `r round(bootDiffStErr, digits = 2)`.
 </p>
@@ -241,33 +259,159 @@ The standard error of the difference in means is `r round(bootDiffStErr, digits 
 *d. Use $\hat{se}_{boot,diff}$ to estimate the 95<sup>th</sup> percentile confidence interval on the difference in means, assuming the interval is given by $(mean \space - \space 1.96\hat{se}_{boot,diff} \space , \space mean \space + \space 1.96\hat{se}_{boot,diff})$.* 
 
 ```{r 2d answer}
-# Calculate the confidence interval using the standard error of the bootstrap differences and the mean of the bootstrap differences
+# Calculate the confidence interval using the standard error of the bootstrap 
+# differences and the mean of the bootstrap differences
 upper2d <- mean(bootDiff)+(1.96*bootDiffStErr)
 lower2d <- mean(bootDiff)-(1.96*bootDiffStErr)
 
 ```
-
 <p class="ans">
-The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples is zero) falls `r ifelse(lower2d < 0 & 0 < upper2d, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2d, digits = 2), ", ", round(upper2d, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples equals zero) falls `r ifelse(lower2d < 0 & 0 < upper2d, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
 </p>
 
 *e. We're now going to answer for 2d in a slightly different way using the percentiles of the bootstrapped samples. Calculate a 95<sup>th</sup> percentile confidence interval for the difference in mean survival days $\overline{Treatment}-\overline{Control}$ based on the quantiles of the bootstrapped samples.*  
 
 ```{r 2e answer}
-# Calculate the confidence interval using the quantiles of the bootstrap mean differences
+# Calculate the confidence interval using the quantiles of the bootstrap mean 
+# differences
 lower2e <- unname(quantile(bootDiff, probs = 0.025))
 upper2e <- unname(quantile(bootDiff, probs = 0.975))
 
 ```
-
 <p class="ans">
-The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples is zero) falls `r ifelse(lower2e < 0 & 0 < upper2e, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`). The since the null hypothesis (difference between the treatment and control samples equals zero) falls `r ifelse(lower2e < 0 & 0 < upper2e, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
 </p>
+
+\newpage 
 
 ### Question 3
 *Briefly (less than a paragraph, with drawings as needed) explain the relationship between testing a hypothesis and estimating an effect size with a confidence interval. Can you use an effect size and its confidence interval to test a hypothesis? If so, how? Why might providing an effect size and its confidence interval be preferable to providing just a p-value?*
 
 <p class="ans">
-Testing a hypothesis and estimating the effect size with a confidence interval are both ways to determine if your data are significant. In the case of the treatment and control groups presented in Question 1, we are testing if the differences between the treatment and control groups are significant determining if the means of the  bootstrapped samples of treatment and control survival days differ significantly from the null hypothesis that $\overline{Treatment} \space - \space \overline{Control} \space = \space 0$. With a hypothesis test, you would receive a p-value that tells you if the null is accepted or rejected. Though that is helpful, it only tells you that your treatment is different from your control without describing the relationship. By including a confidence interval, you can also understand what your underlying population looks like. The difference between the original treatment sample and the control sample is not significant (p = `r t.test(treatment, control)$p.value`), but we again are learning very little about the actual relationship between these two conditions and survival time.For the bootstrap done in Question 2, our null hypothesis is signfiicantly different than the bootstrap sample mean difference distribution (p = `r t.test(bootDiff, mu = 0)$p.value`), which still tells us very little. However, the confidence interval of our bootstrap sample difference distribution (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`) tells us that those who received the treatment survived for a longer time than the control. This gets us closer to the actual relationship between the treatment and survival time. 
+Testing a hypothesis and estimating the effect size with a confidence interval are both ways to determine if your data are significant. In the case of the treatment and control groups presented in Question 1, we are testing if the differences between the treatment and control groups are significant determining if the means of the  bootstrapped samples of treatment and control survival days differ significantly from the null hypothesis that $\overline{Treatment} \space - \space \overline{Control} \space = \space 0$. With a hypothesis test, you would receive a p-value that tells you if the null is accepted or rejected. Though that is helpful, it only tells you that your treatment is different from your control without describing the relationship. By including a confidence interval, you can also understand what your underlying population looks like. The difference between the original treatment sample and the control sample is not significant (p = `r t.test(treatment, control)$p.value`), but we again are learning very little about the actual relationship between these two conditions and survival time. For the bootstrap done in Question 2, our null hypothesis is significantly different than the bootstrap sample mean difference distribution (p = `r t.test(bootDiff, mu = 0)$p.value`), which still tells us very little. However, the confidence interval of our bootstrap sample difference distribution (`r paste(round(lower2e, digits = 2), ", ", round(upper2e, digits = 2), sep = "")`) tells us that those who received the treatment survived for a longer time than the control. This gets us closer to the actual relationship between the treatment and survival time. 
 </p>
 
+\newpage
+
+### Bonus Question
+
+*Using the 'fitdistr' function available from the MASS package, find the distribution that reasonably well fits the treatment and control datasets. Using that distribution, answer Question 2e again using a parametric bootstrap approach.*
+
+<p class="ans">
+A selection of distributions were tested for the treatment and control datasets. The log likelihoods of each are as follows: 
+</p>
+```{r bonus question treatment dist, echo = FALSE, cache = TRUE}
+# Working through the distributions to determine which has the highest 
+# log-likelihood value.
+# "exponential", "log-normal", "logistic", "normal", "Poisson", "weibull"
+
+testDists <- c("exponential", "log-normal", "logistic", "normal", "Poisson", "weibull")
+
+# Treatment bootstrap
+treatLogLike <- testDists
+
+names(treatLogLike) <- testDists
+
+treatLogLike[1] <- fitdistr(x = treatment,
+                            densfun = "exponential")$loglik
+
+treatLogLike[2] <- fitdistr(x = treatment,
+                            densfun = "log-normal")$loglik
+
+treatLogLike[3] <- fitdistr(x = treatment,
+                            densfun = "logistic")$loglik
+
+treatLogLike[4] <- fitdistr(x = treatment,
+                            densfun = "normal")$loglik
+
+treatLogLike[5] <- fitdistr(x = treatment,
+                            densfun = "Poisson")$loglik
+
+treatLogLike[6] <- fitdistr(x = treatment,
+                            densfun = "weibull")$loglik
+
+kable(x = cbind(testDists, 
+                sort(x = round(x = as.numeric(treatLogLike),
+                               digits = 2), 
+                     decreasing = TRUE)
+                ),       
+      col.names = c("Distribution Type", "Log Likelihood"),
+      caption = "Log Likelihood for Test Distributions Representing the Treatment Group"
+      )
+```
+
+```{r bonus question control dist, echo = FALSE, cache = TRUE}
+# Control bootstrap
+conLogLike <- testDists
+
+names(conLogLike) <- testDists
+
+conLogLike[1] <- fitdistr(x = control,
+                            densfun = "exponential")$loglik
+
+conLogLike[2] <- fitdistr(x = control,
+                            densfun = "log-normal")$loglik
+
+conLogLike[3] <- fitdistr(x = control,
+                            densfun = "logistic")$loglik
+
+conLogLike[4] <- fitdistr(x = control,
+                            densfun = "normal")$loglik
+
+conLogLike[5] <- fitdistr(x = control,
+                            densfun = "Poisson")$loglik
+
+conLogLike[6] <- fitdistr(x = control,
+                            densfun = "weibull")$loglik
+
+kable(x = cbind(testDists, 
+                sort(x = round(x = as.numeric(conLogLike),
+                               digits = 2), 
+                     decreasing = TRUE)
+                ),       
+      col.names = c("Distribution Type", "Log Likelihood"),
+      caption = "Log Likelihood for Test Distributions Representing the Control Group"
+      )
+```
+<p class = "ans">
+Since the exponential distribution fits both the treatment and control datasets the best, those parameters will be used.
+</p>
+
+```{r bonus question best fits, cache = TRUE}
+# Worked with Isabel Martins on this code
+# Get distributions for treatment and control datasets
+treatDist <- fitdistr(x = treatment,
+                      densfun = "exponential"
+                      )
+
+conDist <- fitdistr(x = control,
+                    densfun = "exponential"
+                    )
+
+# Sample the new distribution and calculate the skew
+treatPara <- c()
+for (i in 1:100000) {
+        temp <- rexp(n = treatDist$n,
+                     rate = treatDist$estimate)
+        treatPara <- c(treatPara, skewness(temp))
+}
+
+conPara <- c()
+for (i in 1:100000) {
+        temp <- rexp(n = conDist$n,
+                     rate = conDist$estimate)
+        conPara <- c(conPara, skewness(temp))
+}
+
+# Get the difference between the parametric tests
+paraDiff <- c(treatPara - conPara)
+
+# Calculate the 95th percentile of the difference in between the control and 
+# treatment parametric boostraps using an exponential distribution
+upper3 <- quantile(paraDiff, probs = 0.975)
+lower3 <- quantile(paraDiff, probs = 0.025)
+
+```
+<p class="ans">
+The 95<sup>th</sup> percentile confidence interval for the difference in means is (`r paste(round(lower3, digits = 2), ", ", round(upper3, digits = 2), sep = "")`). Since the null hypothesis (difference between the treatment and control samples equals zero) falls `r ifelse(lower3 < 0 & 0 < upper3, "within the confidence interval, the null hypothesis is accepted.", "outside of the confidence interval, the null hypothesis is rejected.") `
+</p>
