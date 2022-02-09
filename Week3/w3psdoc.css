@@ -1,0 +1,14 @@
+body{
+        font-family: cambria;
+        font-size: 12pt;
+        }
+
+p.ans{
+        margin-left: 20px; 
+}
+
+pre{
+        margin-left: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+}

@@ -1,0 +1,58 @@
+---
+title: "BEE552 Biometry Week 3"
+author: "Maria Feiler"
+date: "2/9/2022"
+output:
+  word_document: default
+  html_document:
+    css: w3psdoc.css
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(knitr)
+```
+
+## My Learning Journey
+
+*Over the last week, I participated in Biometry in the following ways:*
+
+<p class = "ans">
+- I asked / answered **4** questions posed in class.
+
+- I asked **#** questions in Slack.
+
+- I answered **#** questions posed by other students on Slack.
+
+- I came to Heather's office hours: **Yes**
+
+- I came to Jose's office hours: **Yes**
+
+- I met with Heather or Jose separately from office hours: **No**
+</p>
+
+*Anything not falling into one of the above categories?*  
+
+<p class = "ans">
+**No**
+</p>
+
+*On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate my comfort with R programming after this week?* 
+
+<p class = "ans">
+**5**
+</p> 
+
+*Any topics from last week that you are still confused about?*
+
+<p class = "ans">
+
+</p>
+
+\newpage
+
+## Problem Set 
+
+### Question 1
