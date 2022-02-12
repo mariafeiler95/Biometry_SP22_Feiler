@@ -3,16 +3,15 @@ title: "BEE552 Biometry Week 3"
 author: "Maria Feiler"
 date: "2/9/2022"
 output:
-  word_document: default
   html_document:
     css: w3psdoc.css
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(knitr)
+library(MASS)
 ```
 
 ## My Learning Journey
@@ -57,3 +56,268 @@ library(knitr)
 ## Problem Set 
 
 ### Question 1
+
+*Let X be a discrete random variable whose pdf is described in the table given here:*
+```{r question 1, echo = FALSE}
+x <- c(-1, 0, 1)
+fx <- c("1/8", "6/8", "1/8")
+
+kable(cbind("x" = x, 
+            "f(x)" = fx))
+```
+
+*Find the following:*
+
+<p class = "ans">
+a. $E[X] = x_1f(x_1) + x_2f(x_2) +x_3f(x_3) = -1(1/8) + 0(6/8) + 1(1/8) = 0$
+
+b. $P(X = 0) = 6/8$
+
+c. $P(X \le 1) = P(X = -1) + P(X = 0) + P(X = 1) = 1$
+
+d. $F(1) = P(X \le 1) = 1$
+
+e. $F^{-1}(7/8) = $
+</p>
+
+### Question 2
+
+*X and Y are independent random variables. Write the following expressions in terms of E[X] and E[Y]*
+
+<p class = "ans">
+a.
+
+b.
+</p>
+
+\newpage
+
+### Question 3
+
+*Use R to convince yourself of the Central Limit Theorem using draws from any distribution that is not the Normal distribution. Briefly (2-3 sentences) explain your process and provide your code as well.*
+
+```{r question 3, comment = NA}
+# Define the test iterations of 1000 Bernoulli trials to be run
+# Code only shows the first test, but replace n[#] with the desired value in
+# nit to produce the second and third histograms.
+nit <- c(1000, 10000, 100000)
+
+# Matrix to catch n[#] iterations of 1000 coin flips
+bern <- matrix(0, 
+               nrow = nit[1], 
+               ncol = 1000)
+
+# Run the iterations
+for (i in 1:nit[1]){
+        bern[i,] <- rbinom(n = 1000,
+                           size = 1,
+                           prob = 0.5)
+}
+
+# Get the mean of each iteration
+Sn <- rowMeans(bern)
+
+# Fit the means to a normal distribution
+fit <- fitdistr(Sn, "normal")
+
+# Define x values to plot the pdf over
+xVals <-  seq(from = min(Sn), 
+               to = max(Sn), 
+               by = 0.001
+               )
+
+# Make histogram
+hist(x = Sn, 
+     # To plot density so the pdf is scaled properly
+     freq = FALSE,
+     breaks = 30,
+     main = "Mean of 1000 Bernoulli Trials, 1000 Repeats"
+     )
+
+# Plot pdf
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+```
+```{r question 1 logik, echo = FALSE, comment = NA}
+# Report the log likelihood of this pdf
+cat(paste("The log likelihood of the normal distribution",
+          paste("N(",
+                round(fit$estimate[1], digits = 3),
+                ", ",
+                round(fit$estimate[2], digits = 3),
+                ")",
+                sep = ""
+                ),
+          "is",
+          round(fit$loglik),
+          "."
+          )
+    )
+```
+
+```{r question 3 cont, echo = FALSE, comment = NA, cache = TRUE}
+# Second Histogram
+
+# Matrix to catch n[#] iterations of 1000 coin flips
+bern <- matrix(0, 
+               nrow = nit[2], 
+               ncol = 1000)
+
+# Run the iterations
+for (i in 1:nit[2]){
+        bern[i,] <- rbinom(n = 1000,
+                           size = 1,
+                           prob = 0.5)
+}
+
+# Get the mean of each iteration
+Sn <- rowMeans(bern)
+
+# Fit the means to a normal distribution
+fit <- fitdistr(Sn, "normal")
+
+# Define x values to plot the pdf over
+xVals <-  seq(from = min(Sn), 
+               to = max(Sn), 
+               by = 0.001
+               )
+
+# Make histogram
+hist(x = Sn, 
+     # To plot density so the pdf is scaled properly
+     freq = FALSE,
+     breaks = 30,
+     main = "Mean of 1000 Bernoulli Trials, 10000 Repeats"
+     )
+
+# Plot pdf
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+# Report the log likelihood of this pdf
+cat(paste("The log likelihood of the normal distribution",
+          paste("N(",
+                round(fit$estimate[1], digits = 3),
+                ", ",
+                round(fit$estimate[2], digits = 3),
+                ")",
+                sep = ""
+                ),
+          "is",
+          round(fit$loglik),
+          "."
+          )
+    )
+
+
+# Third Histogram
+
+# Matrix to catch n[#] iterations of 1000 coin flips
+bern <- matrix(0, 
+               nrow = nit[3], 
+               ncol = 1000)
+
+# Run the iterations
+for (i in 1:nit[3]){
+        bern[i,] <- rbinom(n = 1000,
+                           size = 1,
+                           prob = 0.5)
+}
+
+# Get the mean of each iteration
+Sn <- rowMeans(bern)
+
+# Fit the means to a normal distribution
+fit <- fitdistr(Sn, "normal")
+
+# Define x values to plot the pdf over
+xVals <-  seq(from = min(Sn), 
+               to = max(Sn), 
+               by = 0.001
+               )
+
+# Make histogram
+hist(x = Sn, 
+     # To plot density so the pdf is scaled properly
+     freq = FALSE,
+     breaks = 30,
+     main = "Mean of 1000 Bernoulli Trials, 100000 Repeats"
+     )
+
+# Plot pdf
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+# Report the log likelihood of this pdf
+cat(paste("The log likelihood of the normal distribution",
+          paste("N(",
+                round(fit$estimate[1], digits = 3),
+                ", ",
+                round(fit$estimate[2], digits = 3),
+                ")",
+                sep = ""
+                ),
+          "is",
+          round(fit$loglik),
+          "."
+          )
+    )
+```
+
+<p class = "ans">
+After running these Bernoulli tests with more and more iterations, the log likelihood values show that the normal distribution fits these trials more and more. Using repeated Bernoulli trials, which about are as far from Normal as you can get, to produce a normal distribution of means convinces me of the Central Limit Theorem.
+</p>
+
+\newpage
+
+### Question 4
+
+*Assume that leaf biomass (in grams) from the plant Salix arctica can be described as having the following probability density function:*
+
+$$f(x) = \frac{2}{(x+1)^{3}} \space for \space x > 0$$
+
+*a. Another way of saying that this pdf is restricted to $x>0$ is to say that there is no support for $x\le0$. Why would this be the case here?*
+
+<p class = "ans">
+If you are measuring a mass, you cannot have a "negative" mass. Mass is entirely additive and nonnegative in the same way that height is. Therefore, there is no support for any PDF at $x < 0$ because it is impossible to have a probability for negative mass, something that cannot exist. 
+</p>
+
+*b. Prove (using the two requirements for a valid pdf) that this is a valid pdf.*
+
+**ASK**
+
+*c. Manually (i.e., using calculus) calculate the probability that a leaf has biomass between 0 g and 3 g. In other words, find $P(0<X<3)$.*
+
+\begin{align}
+P(0 < x < 3) &= \int_{0}^{3}\left(\frac{2}{(x+1)^{3}}\right) \; dx \\
+&= 2 \int_{0}^{3}\left(\frac{1}{u^3}\right) \; du \; where \; u = x+1 \\
+&= 2 \int_{0}^{3}(u^{-3}) \; du \\
+&= 2 \left(\frac{u^{-3+1}}{-2+1}\right) \\
+&= \require{cancel} \cancel{2} \left(\frac{u^{-2}}{-\cancel{2}}\right) \\
+&= -u^{-2} \\
+&= \frac{-1}{(x+1)^{2}} \; solved \; over \; 0 \; to \; 3 \\
+&= \frac{-1}{(3+1)^{2}}-\left(-\frac{1}{(0+1)^{2}}\right) \\
+&= -1/16 +1 \\
+&= 15/16 \\
+&= 0.9375 \\
+\end{align}
+
+*d. Use the integrate function in R to confirm this result numerically.*
+
+```{r question 4d, comment = NA}
+integrate(f = function(x){2/(x+1)^3},
+          lower = 0,
+          upper = 3
+          )
+```
+
