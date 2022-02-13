@@ -527,6 +527,8 @@ cat("The standard error of the mean mites per leaf is ",
 
 *Write a short script to simulate the movement of animals operating according to the movement rules described below. For simplicity, we will assume only one-dimensional motion along a line. Animals can move forward, or backwards, along a line. For each animal, simulate 500 individuals each moving for 100 time steps each.*
 
+\newpage
+
 #### Animal 1
 *This animal moves by "Brownian" motion. In each time step, the individual chooses a random direction (50% probability of moving forward or backwards [this is a Binomial process!]) and moves a distance given by (the absolute value of) $N(\mu=0,\sigma^2=1)$.  Cut and paste your script and a histogram of the final location for each of the 500 individuals. Fit a normal distribution to that distribution - what is $\hat{\mu}$ and $\hat{\sigma^2}$^? *
 
@@ -662,4 +664,98 @@ animal1 <- function(steps = 100){
         # 2D list with direction and distance of the animal
         return(result)
 }
+```
+
+\newpage
+
+#### Animal 2
+
+*This animal is similar to Animal #1 but it preferentially moves to the right. In each time step, there is a 60% chance the animal will move to the right, the distance moved is still given by $N(\mu=0,\sigma^2=1)$. Cut and paste your script and a histogram of the final location for each of the 500 individuals. Fit a normal distribution to that distribution - what is $\hat{\mu}$ and $\hat{\sigma^2}$ now? Note that this is still a random walk, albeit one with drift.*
+
+```{r animal 2, cache = TRUE}
+# Define function that describes the movement of this animal over 100 steps
+# Steps default value = 100 as defined by question, but other values can be
+# substituted as needed
+animal2 <- function(steps = 100){     
+        # Vector of random distances, mean and sd as defined by N(mu = 0, sigma = 1)
+        distance <- abs(rnorm(steps,
+                              mean = 0,
+                              sd = 1)
+                        )
+        
+        # Vector to catch the true distances traveled (accounting for length and 
+        # direction, where moving right is a positive movement and moving left 
+        # is a negative movement)
+        result <- c()
+
+        # Loop to determine distance and direction of each step
+        for (i in 1:steps){  
+                # Conducting a Bernoulli trial to determine right (success)
+                # or left (failure), assuming a 60% chance that the animal will
+                # choose right instead of left, then appending the distance 
+                # traveled based on the ith distance in the previously defined 
+                # vector of normally distributed random distances
+                if(rbinom(n = 1, size = 1, prob = 0.6) == 1) {
+                        result[i] <- distance[i]
+                }
+                else{
+                        result[i] <- -distance[i]
+                }
+        }
+        
+        # Vector with distances the animal traveled
+        return(result)
+}
+
+# Run the animal1() function for 500 animals
+simAnimal2 <- matrix(data = 0,
+                     nrow = 500,                    # Number of animals
+                     ncol = 100,                    # Number of steps
+                     dimnames = list(seq(1, 500),
+                                     seq(1, 100)
+                                     )
+                     )
+
+for (i in 1:nrow(simAnimal2)){
+        simAnimal2[i,] <- animal2()
+}
+
+# Get the final location of each animal 
+finalAnimal2 <- rowSums(simAnimal2)
+
+# Fit normal distribution to the animal final locations
+fit <- fitdistr(finalAnimal2, "normal")
+```
+
+```{r animal 2 ans, echo = FALSE, out.width = "80%", fig.align = "center"}
+xVals <-  seq(from = min(finalAnimal2), 
+               to = max(finalAnimal2), 
+               by = 1
+               )
+
+hist(finalAnimal2,
+     freq = FALSE,
+     xlab = "Final Animal Location",
+     main = "Final Location of 500 Animals Moving Under Brownian Motion \n with a 60% Right Bias",
+     breaks = 20
+     )
+
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+mtext(paste("N(", 
+            round(fit$estimate[1], digits = 3), 
+            ", ",
+            round(fit$estimate[2], digits = 3),
+            ") ",
+            sep = ""
+            ),
+      side = 3,
+      adj = 1,
+      cex = 1.2
+      )
+
 ```
