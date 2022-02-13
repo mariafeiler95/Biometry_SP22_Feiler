@@ -514,3 +514,152 @@ cat("The standard error of the mean mites per leaf is ",
 \newpage
 
 ### Question 6
+
+*We are going to get some practice using these statistical distributions in a biological context, and in the process gain some extra practice writing R code. Read Viswanathan et al. (2008) for the biological context of this problem, but don't worry too much about the mathematical details (you can skim over Section 4).*  
+
+*This question is designed to get you writing some more sophisticated R scripts, with more emphasis on loops and logic, but there are some statistical and biological goals as well. Before getting to the actual question, I want to emphasize the following "take-home" messages:*
+
+1. *There are many, many statistical distributions. We have learned only a small subset of all the statistical distributions. Long-tailed distributions (such as the L`evy, Cauchy, and Pareto) have many uses in ecology and evolution.*
+
+2. *Simulations provide a straightforward way of studying complex stochastic phenomena.*
+
+3. *Understanding 'pattern' goes a long way to understanding the underlying 'process'. Statistical distributions provide a way to quantify the pattern of your data. In many cases, only certain biological or ecological mechanisms can generate those patterns.*  
+
+*Write a short script to simulate the movement of animals operating according to the movement rules described below. For simplicity, we will assume only one-dimensional motion along a line. Animals can move forward, or backwards, along a line. For each animal, simulate 500 individuals each moving for 100 time steps each.*
+
+#### Animal 1
+*This animal moves by "Brownian" motion. In each time step, the individual chooses a random direction (50% probability of moving forward or backwards [this is a Binomial process!]) and moves a distance given by (the absolute value of) $N(\mu=0,\sigma^2=1)$.  Cut and paste your script and a histogram of the final location for each of the 500 individuals. Fit a normal distribution to that distribution - what is $\hat{\mu}$ and $\hat{\sigma^2}$^? *
+
+
+```{r animal 1, cache = TRUE}
+# Define function that describes the movement of this animal over 100 steps
+# Steps default value = 100 as defined by question, but other values can be
+# substituted as needed
+animal1 <- function(steps = 100){     
+        # Vector of random distances, mean and sd as defined by N(mu = 0, sigma = 1)
+        distance <- abs(rnorm(steps,
+                              mean = 0,
+                              sd = 1)
+                        )
+        
+        # Vector to catch the true distances traveled (accounting for length and 
+        # direction, where moving right is a positive movement and moving left 
+        # is a negative movement)
+        result <- c()
+
+        # Loop to determine distance and direction of each step
+        for (i in 1:steps){  
+                # Conducting a Bernoulli trial to determine right (success)
+                # or left (failure), then appending the distance traveled based
+                # on the ith distance in the previously defined vector of
+                # normally distributed random distances
+                if(rbinom(n = 1, size = 1, prob = 0.5) == 1) {
+                        result[i] <- distance[i]
+                }
+                else{
+                        result[i] <- -distance[i]
+                }
+        }
+        
+        # Vector with distances the animal traveled
+        return(result)
+}
+
+# Run the animal1() function for 500 animals
+simAnimal1 <- matrix(data = 0,
+                     nrow = 500,                    # Number of animals
+                     ncol = 100,                    # Number of steps
+                     dimnames = list(seq(1, 500),
+                                     seq(1, 100)
+                                     )
+                     )
+
+for (i in 1:nrow(simAnimal1)){
+        simAnimal1[i,] <- animal1()
+}
+
+# Get the final location of each animal 
+finalAnimal1 <- rowSums(simAnimal1)
+
+# Fit normal distribution to the animal final locations
+fit <- fitdistr(finalAnimal1, "normal")
+```
+
+```{r animal 1 ans, echo = FALSE, out.width = "80%", fig.align = "center"}
+xVals <-  seq(from = min(finalAnimal1), 
+               to = max(finalAnimal1), 
+               by = 1
+               )
+
+hist(finalAnimal1,
+     freq = FALSE,
+     xlab = "Final Animal Location",
+     main = "Final Location of 500 Animals Moving Under Brownian Motion",
+     breaks = 20
+     )
+
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+mtext(paste("N(", 
+            round(fit$estimate[1], digits = 3), 
+            ", ",
+            round(fit$estimate[2], digits = 3),
+            ") ",
+            sep = ""
+            ),
+      side = 3,
+      adj = 1,
+      cex = 1.2
+      )
+
+```
+
+```{r, echo = FALSE, eval = FALSE}
+animal1 <- function(steps = 100){     
+        # Vector of random distances, mean and sd as defined by N(mu = 0, sigma = 1)
+        distance <- abs(rnorm(steps,
+                              mean = 0,
+                              sd = 1)
+                        )
+        
+        # List to catch direction, absolute distance traveled per step, and 
+        # the true distances traveled (accounting for length and direction, 
+        # where moving right is a positive movement and moving left is a 
+        # negative movement)
+        temp <- list(stepDir = c(),
+                     stepAbsDist = c(),
+                     stepDist = c()
+                     )
+        
+        # Vector to catch the results
+        result <- c()
+
+        # Loop to determine distance and direction of each step
+        for (i in 1:steps){  
+                # Conducting a Bernoulli trial to determine right (success)
+                # or left (failure), then appending the distance traveled based
+                # on the ith distance in the previously defined vector of
+                # normally distributed random distances
+                if(rbinom(n = 1, size = 1, prob = 0.5) == 1) {
+                        temp$stepDir[i] <- "R"
+                        temp$stepAbsDist[i] <- distance[i]
+                        temp$stepDist[i] <- distance[i]
+                }
+                else{
+                        temp$stepDir[i] <- "L"
+                        temp$stepAbsDist[i] <- distance[i]
+                        temp$stepDist[i] <- -distance[i]
+                }
+        }
+        
+        # Store the results of the for loop
+        result <- c(result, temp)
+        
+        # 2D list with direction and distance of the animal
+        return(result)
+}
+```
