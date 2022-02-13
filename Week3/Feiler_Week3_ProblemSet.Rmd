@@ -77,7 +77,7 @@ c. $P(X \le 1) = P(X = -1) + P(X = 0) + P(X = 1) = 1$
 
 d. $F(1) = P(X \le 1) = 1$
 
-e. $F^{-1}(7/8) = $
+e. $F^{-1}(7/8) =$
 </p>
 
 ### Question 2
@@ -96,11 +96,11 @@ b.
 
 *Use R to convince yourself of the Central Limit Theorem using draws from any distribution that is not the Normal distribution. Briefly (2-3 sentences) explain your process and provide your code as well.*
 
-```{r question 3, comment = NA}
+```{r question 3, comment = NA, out.width = "80%", fig.align = "center"}
 # Define the test iterations of 1000 Bernoulli trials to be run
 # Code only shows the first test, but replace n[#] with the desired value in
 # nit to produce the second and third histograms.
-nit <- c(1000, 10000, 100000)
+nit <- c(10, 100, 1000, 10000)
 
 # Matrix to catch n[#] iterations of 1000 coin flips
 bern <- matrix(0, 
@@ -131,7 +131,7 @@ hist(x = Sn,
      # To plot density so the pdf is scaled properly
      freq = FALSE,
      breaks = 30,
-     main = "Mean of 1000 Bernoulli Trials, 1000 Repeats"
+     main = "Mean of 1000 Bernoulli Trials, 10 Repeats"
      )
 
 # Plot pdf
@@ -144,22 +144,23 @@ lines(xVals, dnorm(xVals,
 ```
 ```{r question 1 logik, echo = FALSE, comment = NA}
 # Report the log likelihood of this pdf
-cat(paste("The log likelihood of the normal distribution",
+cat(paste("The log likelihood of the normal distribution ",
           paste("N(",
                 round(fit$estimate[1], digits = 3),
                 ", ",
                 round(fit$estimate[2], digits = 3),
-                ")",
+                ") ",
                 sep = ""
                 ),
-          "is",
+          "is ",
           round(fit$loglik),
-          "."
+          ".",
+          sep = ""
           )
     )
 ```
 
-```{r question 3 cont, echo = FALSE, comment = NA, cache = TRUE}
+```{r question 3 cont, echo = FALSE, comment = NA, cache = TRUE, out.width = "80%", fig.align = "center"}
 # Second Histogram
 
 # Matrix to catch n[#] iterations of 1000 coin flips
@@ -191,7 +192,7 @@ hist(x = Sn,
      # To plot density so the pdf is scaled properly
      freq = FALSE,
      breaks = 30,
-     main = "Mean of 1000 Bernoulli Trials, 10000 Repeats"
+     main = "Mean of 1000 Bernoulli Trials, 100 Repeats"
      )
 
 # Plot pdf
@@ -202,17 +203,18 @@ lines(xVals, dnorm(xVals,
       )
 
 # Report the log likelihood of this pdf
-cat(paste("The log likelihood of the normal distribution",
+cat(paste("The log likelihood of the normal distribution ",
           paste("N(",
                 round(fit$estimate[1], digits = 3),
                 ", ",
                 round(fit$estimate[2], digits = 3),
-                ")",
+                ") ",
                 sep = ""
                 ),
-          "is",
+          "is ",
           round(fit$loglik),
-          "."
+          ".",
+          sep = ""
           )
     )
 
@@ -248,7 +250,7 @@ hist(x = Sn,
      # To plot density so the pdf is scaled properly
      freq = FALSE,
      breaks = 30,
-     main = "Mean of 1000 Bernoulli Trials, 100000 Repeats"
+     main = "Mean of 1000 Bernoulli Trials, 1000 Repeats"
      )
 
 # Plot pdf
@@ -259,23 +261,82 @@ lines(xVals, dnorm(xVals,
       )
 
 # Report the log likelihood of this pdf
-cat(paste("The log likelihood of the normal distribution",
+cat(paste("The log likelihood of the normal distribution ",
           paste("N(",
                 round(fit$estimate[1], digits = 3),
                 ", ",
                 round(fit$estimate[2], digits = 3),
-                ")",
+                ") ",
                 sep = ""
                 ),
-          "is",
+          "is ",
           round(fit$loglik),
-          "."
+          ".",
+          sep = ""
+          )
+    )
+
+
+# Fourth Histogram
+
+# Matrix to catch n[#] iterations of 1000 coin flips
+bern <- matrix(0, 
+               nrow = nit[4], 
+               ncol = 1000)
+
+# Run the iterations
+for (i in 1:nit[4]){
+        bern[i,] <- rbinom(n = 1000,
+                           size = 1,
+                           prob = 0.5)
+}
+
+# Get the mean of each iteration
+Sn <- rowMeans(bern)
+
+# Fit the means to a normal distribution
+fit <- fitdistr(Sn, "normal")
+
+# Define x values to plot the pdf over
+xVals <-  seq(from = min(Sn), 
+               to = max(Sn), 
+               by = 0.001
+               )
+
+# Make histogram
+hist(x = Sn, 
+     # To plot density so the pdf is scaled properly
+     freq = FALSE,
+     breaks = 30,
+     main = "Mean of 1000 Bernoulli Trials, 10000 Repeats"
+     )
+
+# Plot pdf
+lines(xVals, dnorm(xVals, 
+                   mean = fit$estimate[1],
+                   sd = fit$estimate[2]
+                   )
+      )
+
+# Report the log likelihood of this pdf
+cat(paste("The log likelihood of the normal distribution ",
+          paste("N(",
+                round(fit$estimate[1], digits = 3),
+                ", ",
+                round(fit$estimate[2], digits = 3),
+                ") ",
+                sep = ""
+                ),
+          "is ",
+          round(fit$loglik),
+          ".",
+          sep = ""
           )
     )
 ```
 
 <p class = "ans">
-After running these Bernoulli tests with more and more iterations, the log likelihood values show that the normal distribution fits these trials more and more. Using repeated Bernoulli trials, which about are as far from Normal as you can get, to produce a normal distribution of means convinces me of the Central Limit Theorem.
+After running these Bernoulli tests with more and more iterations, the log likelihood values show that the normal distribution fits better the more iterations used. Using repeated Bernoulli trials, which about are as far from Normal as you can get, to produce a normal distribution of means convinces me of the Central Limit Theorem.
 </p>
 
 \newpage
@@ -321,3 +382,135 @@ integrate(f = function(x){2/(x+1)^3},
           )
 ```
 
+\newpage
+
+### Question 5
+
+*Bliss and R.A. Fisher (1953) examined female European red mite counts (Panonychus ulmi) on McIntosh apple trees [Malus domestica [McIntosh]). Counts of the mites on 150 leaves are shown here:*
+
+```{r question 5, echo = FALSE}
+kable(rbind("Mites per Leaf" = c(0, 1, 2, 3, 4, 5, 6, 7, 8), 
+            "Leaves Observed" = c(70, 38, 17, 10, 9, 3, 2, 1, 0)
+            )
+      )
+```
+
+*a. What is the expected value E[X] of mites per leaf in this sample (show your work, either an R script or a calculation)?*
+
+```{r question 5a, comment = NA}
+# Define vectors of the mites per leaf and number of leaves observed
+mites <- c(0, 1, 2, 3, 4, 5, 6, 7, 8)
+leaves <- c(70, 38, 17, 10, 9, 3, 2, 1, 0)
+
+# Make vector of the mites observed on each leaf
+obs <- c()
+
+for (i in 1:length(mites)) {
+        temp <- rep(mites[i], leaves[i])
+        obs <- c(obs, temp)
+}
+```
+```{r question 5a cont, eval = FALSE}
+# Expected value (E[X]) is the mean of all the observations
+mean(obs)
+```
+```{r question 5a ans, echo = FALSE, comment = NA}
+cat("lambda =", 
+    round(mean(obs), 
+          digits = 2)
+    )
+
+```
+
+*b. Assume for the moment that Bliss and Fisher used a Poisson distribution to describe the number of mites per leaf X $(X \sim Pois(\lambda))$. What would be the most reasonable value for the Poisson parameter $\lambda$ and why? *
+
+<p class = "ans">
+Lambda ($\lambda$) for a Poisson distribution is defined as the mean of the observations. As the sample size increases, $\lambda$ will converge on a normal distribution, or $\displaystyle \lim_{x \to \infty}(X \sim Pois(\lambda)) \to N(\lambda, \lambda)$, and as a result $\lambda$ will converge on $E[X]$. Therefore, $\lambda = 1.15$.
+</p>
+
+*c. Make a barplot (the R function histogram should work, but as these are discrete variables, we would normally refer to this as a bar plot) of Bliss and Fisher's data. Is the expected value also the most common value? Why or why not?*
+
+```{r question 5c, echo = FALSE, out.width = "80%", fig.align = "center"}
+BlissFisher <- barplot(setNames(leaves, mites),
+                       main = "Mites per Leaf (Bliss and Fisher 1953)",
+                       xlab = "Mites per Leaf",
+                       ylab = "Leaves Observed", 
+                       ylim = c(0, 75)
+                       )
+
+text(BlissFisher, 
+     leaves + 2, 
+     paste("n =", leaves), 
+     cex = 0.8
+     )
+
+```
+
+<p class = "ans">
+The expected value is not the most common value because the expected value is not an integer. Since this distribution is defined by discrete observations, the expected value 1.15 will not be represented by the data at all. If we were to round to the nearest integer (1), it still does not represent the most common value (0). This is because it is impossible to get a mean of 0 if there are any observations that are greater than zero.
+</p>
+
+*d. What is the standard deviation of the number of mites per leaf? What is the standard error of the mean (SEM) number of mites per leaf? In one sentence, describe the interpretation of the standard error of the mean?*
+
+```{r question 5d, eval = FALSE}
+# To calculate the standard deviation
+sd(obs)
+
+# To calculate the standard error of the mean
+sd(obs)/sqrt(length(obs))
+```
+
+```{r question 5d ans, echo = FALSE, comment = NA}
+cat("The standard deviation of the mites per leaf is ", 
+    sd(obs), 
+    ".", 
+    sep = ""
+    )
+
+cat("The standard error of the mean mites per leaf is ", 
+    sd(obs)/sqrt(length(obs)), 
+    ".", 
+    sep = ""
+    )
+```
+
+*e. To gain better intuition for the meaning of the standard error of the mean, create 1000 new datasets by sampling with replacement from the original dataset. Use those 1000 simulated datasests to calculate the standard error of the mean. Because of sampling error, this will not be exactly the same as what you calculated in part d, but it should be close.*
+
+```{r question 5e, cache = TRUE}
+# Define number of iterations
+nit = 1000
+
+# Create matrix to catch the 1000 trials
+bootObs <- matrix(data = NA, 
+                  nrow = nit, 
+                  ncol = length(obs),
+                  dimnames = list(c(1:nit),
+                                  c(1:length(obs))
+                                  )
+                )
+
+# Create 1000 more datasets sampling with replacement
+for (i in 1:nit) {
+        bootObs[i,] <- sample(x = obs,
+                              size = length(obs),
+                              replace = TRUE
+                              )
+}
+```
+```{r question 5e cont, eval = FALSE}
+# Calculate the standard error of the mean of the bootstrap datasets
+sd(rowMeans(bootObs))
+
+```
+
+```{r question 5e ans, echo = FALSE, comment = NA}
+cat("The standard error of the mean mites per leaf is ", 
+    sd(rowMeans(bootObs)), 
+    ".", 
+    sep = ""
+    )
+```
+
+\newpage
+
+### Question 6
