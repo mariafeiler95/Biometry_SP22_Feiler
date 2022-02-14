@@ -21,11 +21,11 @@ library(MASS)
 
 - I asked / answered **4** questions posed in class.
 
-- I asked **#** questions in Slack.
+- I asked **4** questions in Slack.
 
-- I answered **#** questions posed by other students on Slack.
+- I answered **0** questions posed by other students on Slack.
 
-- I came to Heather's office hours: **Yes**
+- I came to Heather's office hours: **No**
 
 - I came to Jose's office hours: **Yes**
 
@@ -42,7 +42,7 @@ library(MASS)
 
 *Any topics from last week that you are still confused about?*
 
-> 
+> **Doing fine for now**
 
 \newpage
 
