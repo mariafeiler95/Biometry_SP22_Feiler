@@ -1,0 +1,125 @@
+---
+title: "Feiler_Week4_Lab"
+author: "Maria Feiler"
+date: "2/17/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Maximum Likelihood
+
+```{r maxlik tests}
+# Define NLL
+neg.ll <- function(x, mu, sigma2){
+        sum(0.5*log(2*pi*sigma2)+0.5*((x-mu)^2)/sigma2)
+}
+
+# Make fake data
+x <- rnorm(1000, mean = 1, sd = 2)
+
+# Make parameters to test
+mu.test.values <- seq(-2, 4, 0.1)
+sigma2.test.values <- seq(1, 11, 0.1)
+
+# Make matrix to store values of the likelihood of potenial mu and sigma^2 values
+likelihood.matrix <- matrix(nrow = length(mu.test.values),
+                            ncol = length(sigma2.test.values)
+                            )
+
+# Search paramter space by brute force, calculating the likelihood on a grid of potential mu and sigma^2 values
+
+for (i in 1:length(mu.test.values)){
+        
+        for (j in 1:length(sigma2.test.values)) {
+                
+                likelihood.matrix[i, j] <- neg.ll(x = x, 
+                                                  mu = mu.test.values[i], 
+                                                  sigma2 = sigma2.test.values[j]
+                                                  )
+        }
+}
+
+# Plot the results 
+image(mu.test.values, 
+      sigma2.test.values, 
+      likelihood.matrix, 
+      col = topo.colors(100)
+      )
+
+contour(mu.test.values,
+        sigma2.test.values,
+        likelihood.matrix,
+        nlevels = 30,
+        add = TRUE
+        )
+
+# Define the maximum likelihood
+max.element <- which(likelihood.matrix == min(likelihood.matrix), 
+                     arr.ind = TRUE
+                     )
+
+# Plot most likely mu/sigma^2
+points(mu.test.values[max.element[1]], 
+       sigma2.test.values[max.element[2]],
+       pch = 16,
+       cex = 2
+       )
+
+# Plot actual mu/sigma^2
+points(1, 4, pch = "x", cex = 2)
+
+# Plot likelihood "slices," or cross sextions across the search grid for fixed values of mu or sigma^2
+
+# Define graphics space
+par(mfrow = c(1, 2))
+
+# Plot values
+plot(mu.test.values,
+     likelihood.matrix[,max.element[2]],
+     typ = "b"
+     )
+plot(sigma2.test.values,
+     likelihood.matrix[max.element[1],],
+     typ = "b"
+     )
+
+# Note that immediately in the vicinity of the minimum, the likelihood surface is approximately quadratic and symmetric, though not the whole way through
+
+# New neg.ll() function that utilizes the probability density function given by d()
+neg.ll.v2 <- function(x, params){
+        mu = params[1]
+        sigma = params[2]
+        -sum(dnorm(x,
+                   mean = mu,
+                   sd = sigma, 
+                   log = TRUE)
+             )
+}
+
+# Run neg.ll.v2() over x
+opt1<-optim(par = c(1,1),
+            fn = neg.ll.v2,
+            x = x
+            )
+
+opt1[1]
+opt1[2]
+
+# Try again with fitdistr(), which works unless you don't have a traditional distribution
+library(MASS)
+        
+fitdistr(x, "normal")
+
+# Now need to calculate the confidence interval for the parameter estimates, otherwise they're useless. 
+
+# One-parameter model (theta). What values of estimated theta are reasonable under the null hypothesis that hat(theta) is the true value?
+
+# Set cut off for difference in log-likelihoods based on the 95th percentile of a chi^2 distribution
+qchisq(0.95, 1)/2
+
+# Calculate the NLL over a range of parameter values (problem set) and find the CIs that represent those parameter estimates that have < 1.92 increase in NLL from the MLE.
+
+```

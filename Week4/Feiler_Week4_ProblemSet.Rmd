@@ -2,11 +2,19 @@
 title: "BEE552 Biometry Week 4"
 author: "Maria Feiler"
 date: "2/16/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(readxl)
+library(MASS)
+library(data.table)
+library(dplyr)
+library(knitr)
 ```
 
 ## My Learning Journey
@@ -19,9 +27,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - I answered **1** questions posed by other students on Slack.
 
-- I came to Heather's office hours: **Yes, Thursday**
+- I came to Heather's office hours: **No**
 
-- I came to Jose's office hours: **Yes**
+- I came to Jose's office hours: **No**
 
 - I met with Heather or Jose separately from office hours: **No**
 
@@ -42,4 +50,153 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Problem Set 
 
-### Question 1
+### Part 1
+*We will be using a recently published dataset on ancient rings and ribs that may have been used as early forms of money. These data come from the paper “The origins of money: Calculation of similarity indexes demonstrates the earliest development of commodity money in prehistoric Central Europe” by M.H.G. Kuijpers and C. Popa (PLoS ONE, January 20, 2021).*
+
+*Download the data in the file “rings_and_ribs.csv”.*
+
+```{r money}
+money <- read_excel("journal.pone.0240462.s002.xlsx",
+                    sheet = 1
+                    )
+
+# Rename the weight column to make it tidy
+money <- rename(money, Weight = `Weight (g)`)
+```
+
+\tiny
+```{r money display, echo = FALSE, comment = NA}
+kable(as.data.frame(money[sample(seq(1, length(money$Location)), 30, replace = FALSE),]),
+      caption = "A selection of data from Kuijpers and Popa 2021.",
+      row.names = FALSE
+      )
+
+```
+
+\normalsize
+
+\newpage
+
+#### Question 1
+*For now, let’s group all the locations together. Make a histogram of ring weight.*
+
+```{r p1q1, echo = FALSE}
+hist(money$Weight[money$Type == "Ring"],
+    main = "Ring Weights",
+    breaks = 30, 
+    xlab = "Weight (g)"
+    )
+```
+
+#### Question 2
+*What is the FORMULA for the sample mean and standard deviation (in other words, what is the formula you would want to use if you wanted to estimate the population mean [the $\mu$ parameter assuming a normal distribution] and the population variance [$\sigma^2$  if we assume a normal distribution] from a sample that represented a random subset of the entire population)?*
+
+$$
+\begin{aligned}
+\overline{X} &= \frac{\sum^{n}_{i=1}X_i}{n} \\
+S &= \sqrt{\frac{\sum^{n}_{i=1}(X_i - \overline{X})^2}{n-1}}
+\end{aligned}
+$$
+
+#### Question 3
+*What is the population about which we are trying to make inference?*
+
+> The population is the total collection of rings and ribs ever used for currency in the context of Germany, Austria, the Czech Republic, and Poland during this time period.
+
+#### Question 4
+*Using R, what are the mean and the standard deviation of ring weight?*
+
+```{r p1q4, echo = FALSE, comment = FALSE}
+ringMean <- mean(money["Type" = "Ring",]$Weight)
+
+ringSD <- sd(money["Type" = "Ring",]$Weight)
+```
+
+> The mean of the ring weights is `r round(mean(money["Type" = "Ring",]$Weight), digits = 3)`. The standard deviation of ring weights is `r round(sd(money["Type" = "Ring",]$Weight), digits = 3)`.
+
+#### Question 5
+*What is the formula for the standard error of the mean (heretofore s.e.)?*
+
+$$
+SEM = \sqrt{\frac{S^{2}}{n}}
+$$
+
+#### Question 6
+*Describe the difference between the s.e. (of the mean) and the s.d.*
+
+> The standard deviation is a measure of the variance of your sample The standard error of the mean describes how close your sample mean approximates the population mean.")
+
+#### Question 7
+*Finish the sentence: The standard error is the standard deviation of...*
+
+> ...the mean.
+
+#### Question 8
+*Use the MASS package’s ‘fitdistr’ function to fit a normal distribution to the ring weight data. Do you get the roughly same answer as above?*
+
+```{r p1q8, comment = NA}
+ringWeightFit <- fitdistr(money["Type" = "Ring",]$Weight,
+                           "normal")
+
+# Calculate difference in calculated and fitdistr() means
+meandif <- unname(ringWeightFit$estimate[1]) - ringMean
+
+# Calculate difference in calculated and fitdistr() standard deviations
+sddif <- unname(ringWeightFit$estimate[2]) - ringSD
+
+```
+
+> The difference between the calculated mean and the mean from fitdistr() is `r round(meandif, digits = 3)` The difference between the calculated standard deviation and the standard deviation from fitdistr() is `r round(sddif, digits = 5)`.
+
+### Question 9
+*Why might it not be valid to group the different locations when summarizing the data?*
+
+>Though there might be differences between the rings used as currency in each country, all were considered to have moneytary value and might have changed hands outside of country/political entity lines. Since they are all from the same time period, if you want to characterize how the earliest money worked, you must use all the material that was used as money.
+
+\newpage
+
+#### Question 10
+*Using the R command ‘boxplot’, create a boxplot to compare ring weight across different countries.*
+
+```{r ringsByCountry}
+ringsByCountry <- melt(data = as.data.table(money["Type" = "Ring",]), 
+                       id = "Country", 
+                       measure = "Weight"
+                       )
+```
+
+```{r p1q10, echo = FALSE}
+boxplot(value ~ Country, 
+        ringsByCountry,
+        ylab = "Weight (g)",
+        main = "Ring Weights by Country")
+```
+
+#### Question 11
+*Make the case (in words and/or mathematically) that average ring weight in Germany is or is not statistically different from the average ring weight in Austria.*
+
+> I will test whether or not the mean weight of Austrian and German rings are statistically different using a critical value of $\alpha_{c} = 0.05$. The null hypothesis $(H_0: \overline{x}_{German} = \overline{x}_{Austrian})$ will be tested using a student's t-test and will be rejected if $p > 0.05$. 
+
+```{r p1q11}
+GermanVSAustrian <- t.test(ringsByCountry$value[ringsByCountry$Country == "Germany"],
+                           ringsByCountry$value[ringsByCountry$Country == "Austria"]
+                           )
+```
+
+> The average weight of Austrian rings (`r round(unname(GermanVSAustrian$estimate[2]), digits = 2)` grams) is statistically greater than the average weight of German rings (`r round(unname(GermanVSAustrian$estimate[1]), digits = 2)` grams) (p `r ifelse(GermanVSAustrian$p.value < 0.001, "< 0.001", round(GermanVSAustrian$p.value, digits = 2)) `). 
+
+\newpage
+
+#### Question 12
+*So far, we’ve only been focused on ring weight. Let’s go back and make a histogram of rib weight. Why would testing a hypothesis about average rib weight be harder?*
+
+```{r p1q12, echo = FALSE}
+hist(money$Weight[money$Type == "Rib"],
+    main = "Rib Weights",
+    breaks = 30, 
+    xlab = "Weight (g)"
+    )
+```
+
+> Making predictions or testing hypotheses about rib weight would be difficult because they appear to follow a bimodal distribution. 
+
