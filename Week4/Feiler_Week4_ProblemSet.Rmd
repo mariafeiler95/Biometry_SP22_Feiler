@@ -50,7 +50,7 @@ library(knitr)
 
 ## Problem Set 
 
-### Part 1
+### Part I
 *We will be using a recently published dataset on ancient rings and ribs that may have been used as early forms of money. These data come from the paper “The origins of money: Calculation of similarity indexes demonstrates the earliest development of commodity money in prehistoric Central Europe” by M.H.G. Kuijpers and C. Popa (PLoS ONE, January 20, 2021).*
 
 *Download the data in the file “rings_and_ribs.csv”.*
@@ -65,7 +65,7 @@ money <- rename(money, Weight = `Weight (g)`)
 ```
 
 \tiny
-```{r money display, echo = FALSE, comment = NA}
+```{r money display, echo = FALSE, comment = NA, cache = TRUE}
 kable(as.data.frame(money[sample(seq(1, length(money$Location)), 30, replace = FALSE),]),
       caption = "A selection of data from Kuijpers and Popa 2021.",
       row.names = FALSE
@@ -151,7 +151,7 @@ sddif <- unname(ringWeightFit$estimate[2]) - ringSD
 ### Question 9
 *Why might it not be valid to group the different locations when summarizing the data?*
 
->Though there might be differences between the rings used as currency in each country, all were considered to have moneytary value and might have changed hands outside of country/political entity lines. Since they are all from the same time period, if you want to characterize how the earliest money worked, you must use all the material that was used as money.
+>Though there might be differences between the rings used as currency in each country, all were considered to have monetary value and might have changed hands outside of country/political entity lines. Since they are all from the same time period, if you want to characterize how the earliest money worked, you must use all the material that was used as money.
 
 \newpage
 
@@ -199,4 +199,98 @@ hist(money$Weight[money$Type == "Rib"],
 ```
 
 > Making predictions or testing hypotheses about rib weight would be difficult because they appear to follow a bimodal distribution. 
+
+\newpage
+
+### Part II
+
+*Assume an experiment in which the number of plants in 16 experimental plots is counted as:* 
+
+```{r plants}
+plants <- c(8, 0, 3, 3, 4, 3, 2, 3, 3, 2, 4, 2, 3, 1, 4, 1)
+```
+
+*We want to model the number of plants in each plot as being distributed according to a Poisson distribution.*
+
+#### Question 1
+*Starting with the probability density function for the Poisson, manually derive the maximum likelihood estimate for $\lambda$, the parameter for the Poisson distribution.*
+
+$$
+\begin{aligned}
+f(x\mid\lambda) &= \frac{e^{-\lambda}\lambda^{x}}{x!} \\
+
+f(X_1, X_2...,X_n \mid \lambda) &= \prod_{i=1}^{n}\frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \\
+
+L(\lambda \mid X_1, X_2,...,X_n) &= \prod_{i=1}^{n}\frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \\
+
+LL &= \sum_{i=1}^{n} \left(ln \frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \right) \\
+
+LL &= \sum_{i=1}^{n} (ln \; e^{-\lambda} + ln \; \lambda^{X_i} -ln \; X_i!) \\
+
+LL &= \sum_{i=1}^{n} (-\lambda + X_i \; ln \; \lambda - ln \; X_i!) \\
+
+NLL &= \sum_{i=1}^{n} (\lambda - X_i \; ln \; \lambda + ln \; X_i!) \\
+
+\frac{\partial NLL}{\partial \lambda} &= \sum_{i=1}^{n} \left(1- \frac{X_i}{\lambda} \right) \\
+
+0 &= \sum_{i=1}^{n} \left(1- \frac{X_i}{\hat{\lambda}} \right) \\
+
+0 &= n - \sum_{i=1}^{n} \left(\frac{X_i}{\hat{\lambda}} \right) \\
+
+n &= \sum_{i=1}^{n} \left(\frac{X_i}{\hat{\lambda}} \right) \\
+
+n &= \frac{1}{\hat{\lambda}} \sum_{i=1}^{n} X_i \\
+
+\hat{\lambda} &= \frac{\sum_{i=1}^{n} X_i}{n}
+
+\end{aligned}
+$$
+
+#### Question 2
+*Write an R function to calculate the negative log-likelihood for this data as described by the Poisson distribution.*
+
+> From question 1, we know the negative log-likelihood of a Poisson distribution is $NLL = \sum_{i=1}^{n} (\lambda - X_i \; ln \; \lambda) = n\lambda -\sum_{i=1}^{n} X_i \; ln \; \lambda$
+
+```{r p2q2}
+# Function inspired by https://www.ime.unicamp.br/~cnaber/optim_1.pdf
+neg.ll <- function(x, lambda){
+        result <- length(x)*lambda - sum(x)*log(lambda)
+        return(result)
+}
+
+# Test the function across many potential lambda values
+# Define test lambda values
+lambdaVals <- seq(min(plants),
+                  max(plants),
+                  by = 0.1
+                  )
+
+# Create vector to catch log likelihood values of test lambdas
+plantLogLiks <- rep(0, length(lambdaVals))
+
+# Run neg.ll() over all lambdaVals
+for (i in 1:length(lambdaVals)){
+        plantLogLiks[i] <- neg.ll(plants, lambdaVals[i])
+}
+```
+
+```{r p2q2 plot, echo = FALSE}
+plot(lambdaVals,
+     plantLogLiks,
+     xlab = "Test Lambda Values",
+     ylab = "Negative Log-Likelihood",
+     main = "Negative Log-Likelihood Values for Average Plants per Plot", 
+     bg = ifelse(plantLogLiks == min(plantLogLiks),
+                  "cornflowerblue",
+                  "black"
+                  ),
+     pch = ifelse(plantLogLiks == min(plantLogLiks),
+                  21, 
+                  20
+                  )
+     )
+
+```
+
+> The calculated lambda for the plants in plots is `r mean(plants)`. The lambda value with the lowest log-likelihood is `r lambdaVals[which(plantLogLiks == min(plantLogLiks))]`, NLL = `r round(min(plantLogLiks), digits = 2)`.
 
