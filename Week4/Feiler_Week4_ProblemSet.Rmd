@@ -236,14 +236,22 @@ $$
 #### Question 2
 *Write an R function to calculate the negative log-likelihood for this data as described by the Poisson distribution.*
 
-> From question 1, we know the negative log-likelihood of a Poisson distribution is $NLL = \sum_{i=1}^{n} (\lambda - X_i \; ln \; \lambda) = n\lambda -\sum_{i=1}^{n} X_i \; ln \; \lambda$
+> From question 1, we know the negative log-likelihood of a Poisson distribution is $NLL = \sum_{i=1}^{n} (\lambda - X_i \; ln \; \lambda + ln \; X_i!)$
 
 ```{r p2q2}
-# Function inspired by https://www.ime.unicamp.br/~cnaber/optim_1.pdf
 neg.ll <- function(x, lambda){
-        result <- length(x)*lambda - sum(x)*log(lambda)
+        result <- length(x)*lambda - sum(x)*log(lambda) + sum(log(factorial(x)))
         return(result)
 }
+
+# The non-try-hard version:
+# neg.ll.v2 <- function(x, lambda){
+#       result <- -sum(dpois(x, 
+#                            lambda, 
+#                            log = TRUE)
+#                            )
+#       return(result)
+#       }
 
 ```
 
@@ -304,20 +312,31 @@ plot(lambdaVals,
      ylab = "Negative Log-Likelihood",
      main = "Negative Log-Likelihood Values for Average Plants per Plot", 
      pch = 1,
-     cex = 0.9
+     cex = 0.9,
+     cex.axis = 0.9
      )
 
-abline(v = c(LL95, UL95), lty = 2, lwd = 1.5)
+abline(v = c(LL95, UL95), 
+       lty = 2, 
+       lwd = 1.5
+       )
 
-abline(v = c(LL99, UL99), lty = 3, lwd = 1.5)
+abline(v = c(LL99, UL99), 
+       lty = 3, 
+       lwd = 1.5
+       )
 
-points(x = plantMinLogLik$minimum, y = plantMinLogLik$objective, pch = 21, bg = "cornflowerblue")
+points(x = plantMinLogLik$minimum, 
+       y = plantMinLogLik$objective, 
+       pch = 23, 
+       bg = "cornflowerblue"
+       )
 
 legend("topright", 
        c("95% CI", "99% CI", "MLE"),
        lty = c(2, 3, NA), 
        lwd = c(1.5, 1.5, NA),
-       pch = c(NA, NA, 21),
+       pch = c(NA, NA, 23),
        pt.bg = c(NA, NA, "cornflowerblue"),
        bty = "n",
        inset = 0.01
