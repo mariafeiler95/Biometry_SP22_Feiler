@@ -313,7 +313,7 @@ plot(lambdaVals,
      main = "Negative Log-Likelihood Values for Average Plants per Plot", 
      pch = 1,
      cex = 0.9,
-     cex.axis = 0.9
+     cex.axis = 0.8
      )
 
 abline(v = c(LL95, UL95), 
