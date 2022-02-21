@@ -218,31 +218,18 @@ plants <- c(8, 0, 3, 3, 4, 3, 2, 3, 3, 2, 4, 2, 3, 1, 4, 1)
 $$
 \begin{aligned}
 f(x\mid\lambda) &= \frac{e^{-\lambda}\lambda^{x}}{x!} \\
-
 f(X_1, X_2...,X_n \mid \lambda) &= \prod_{i=1}^{n}\frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \\
-
 L(\lambda \mid X_1, X_2,...,X_n) &= \prod_{i=1}^{n}\frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \\
-
 LL &= \sum_{i=1}^{n} \left(ln \frac{e^{-\lambda}\lambda^{X_i}}{X_i!} \right) \\
-
 LL &= \sum_{i=1}^{n} (ln \; e^{-\lambda} + ln \; \lambda^{X_i} -ln \; X_i!) \\
-
 LL &= \sum_{i=1}^{n} (-\lambda + X_i \; ln \; \lambda - ln \; X_i!) \\
-
 NLL &= \sum_{i=1}^{n} (\lambda - X_i \; ln \; \lambda + ln \; X_i!) \\
-
 \frac{\partial NLL}{\partial \lambda} &= \sum_{i=1}^{n} \left(1- \frac{X_i}{\lambda} \right) \\
-
 0 &= \sum_{i=1}^{n} \left(1- \frac{X_i}{\hat{\lambda}} \right) \\
-
 0 &= n - \sum_{i=1}^{n} \left(\frac{X_i}{\hat{\lambda}} \right) \\
-
 n &= \sum_{i=1}^{n} \left(\frac{X_i}{\hat{\lambda}} \right) \\
-
 n &= \frac{1}{\hat{\lambda}} \sum_{i=1}^{n} X_i \\
-
 \hat{\lambda} &= \frac{\sum_{i=1}^{n} X_i}{n}
-
 \end{aligned}
 $$
 
@@ -258,11 +245,16 @@ neg.ll <- function(x, lambda){
         return(result)
 }
 
-# Test the function across many potential lambda values
+```
+
+#### Question 3
+*Using your function for the negative log-likelihood, calculate the MLE for $\lambda$ and the 95^th^ percentile confidence interval. What would the 99^th^ percentile confidence interval be?*
+
+```{r p2q3 lambda tests, cache = TRUE}
 # Define test lambda values
 lambdaVals <- seq(min(plants),
                   max(plants),
-                  by = 0.1
+                  by = 0.05
                   )
 
 # Create vector to catch log likelihood values of test lambdas
@@ -272,25 +264,63 @@ plantLogLiks <- rep(0, length(lambdaVals))
 for (i in 1:length(lambdaVals)){
         plantLogLiks[i] <- neg.ll(plants, lambdaVals[i])
 }
+
+# Use optimize() to determine the minimum value
+plantMinLogLik <- optimize(f = neg.ll, x = plants, interval = lambdaVals)
+
+# 95th percentile confidence interval
+# Collect the positions of the lambda values whose negative log-likelihoods are
+# within 1.92 of the minimum
+vals95 <- which(plantLogLiks < plantMinLogLik$objective + 1.92)
+
+# Use the first and last to select the corresponding lambda value
+LL95 <- lambdaVals[vals95[1]]
+UL95 <- lambdaVals[vals95[length(vals95)]]
+
+# 99th percentile confidence interval
+# Collect the positions of the lambda values whose negative log-likelihoods are
+# within 3.32 of the minimum
+vals99 <- which(plantLogLiks < plantMinLogLik$objective + 3.32)
+
+# Use the first and last to select the corresponding lambda value
+LL99 <- lambdaVals[vals99[1]]
+UL99 <- lambdaVals[vals99[length(vals99)]]
+
 ```
 
-```{r p2q2 plot, echo = FALSE}
+> The calculated lambda for the plants per plot is `r mean(plants) `. The optimized lambda value with the lowest log-likelihood is `r round(plantMinLogLik$minimum, digits = 3) `, NLL = `r round(plantMinLogLik$objective, digits = 3) `.
+
+> 95^th^ percentile confidence interval: (`r LL95`, `r UL95`) 
+
+> 99^th^ percentile confidence interval: (`r LL99`, `r UL99`) 
+
+#### Question 4
+*Plot the likelihood over a range of parameter values and plot the boundaries of the 95^th^ and 99^th^ percentile confidence interval. Remember: The confidence interval is a range of parameter values, it is NOT the likelihood values itself.*
+
+```{r p2q4 plot, echo = FALSE}
 plot(lambdaVals,
      plantLogLiks,
      xlab = "Test Lambda Values",
      ylab = "Negative Log-Likelihood",
      main = "Negative Log-Likelihood Values for Average Plants per Plot", 
-     bg = ifelse(plantLogLiks == min(plantLogLiks),
-                  "cornflowerblue",
-                  "black"
-                  ),
-     pch = ifelse(plantLogLiks == min(plantLogLiks),
-                  21, 
-                  20
-                  )
+     pch = 1,
+     cex = 0.9
      )
 
+abline(v = c(LL95, UL95), lty = 2, lwd = 1.5)
+
+abline(v = c(LL99, UL99), lty = 3, lwd = 1.5)
+
+points(x = plantMinLogLik$minimum, y = plantMinLogLik$objective, pch = 21, bg = "cornflowerblue")
+
+legend("topright", 
+       c("95% CI", "99% CI", "MLE"),
+       lty = c(2, 3, NA), 
+       lwd = c(1.5, 1.5, NA),
+       pch = c(NA, NA, 21),
+       pt.bg = c(NA, NA, "cornflowerblue"),
+       bty = "n",
+       inset = 0.01
+       )
+
 ```
-
-> The calculated lambda for the plants in plots is `r mean(plants)`. The lambda value with the lowest log-likelihood is `r lambdaVals[which(plantLogLiks == min(plantLogLiks))]`, NLL = `r round(min(plantLogLiks), digits = 2)`.
-
