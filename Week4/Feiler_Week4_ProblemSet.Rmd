@@ -25,9 +25,9 @@ library(knitr)
 
 - I asked **0** questions in Slack.
 
-- I answered **1** questions posed by other students on Slack.
+- I answered **2** questions posed by other students on Slack.
 
-- I came to Heather's office hours: **No**
+- I came to Heather's office hours: **Yes**
 
 - I came to Jose's office hours: **No**
 
@@ -107,9 +107,9 @@ $$
 *Using R, what are the mean and the standard deviation of ring weight?*
 
 ```{r p1q4, echo = FALSE, comment = FALSE}
-ringMean <- mean(money["Type" = "Ring",]$Weight)
+ringMean <- mean(money$Weight[money$Type == "Ring"])
 
-ringSD <- sd(money["Type" = "Ring",]$Weight)
+ringSD <- sd(money$Weight[money$Type == "Ring"])
 ```
 
 > The mean of the ring weights is `r round(mean(money["Type" = "Ring",]$Weight), digits = 3)`. The standard deviation of ring weights is `r round(sd(money["Type" = "Ring",]$Weight), digits = 3)`.
@@ -135,8 +135,8 @@ $$
 *Use the MASS package’s ‘fitdistr’ function to fit a normal distribution to the ring weight data. Do you get the roughly same answer as above?*
 
 ```{r p1q8, comment = NA}
-ringWeightFit <- fitdistr(money["Type" = "Ring",]$Weight,
-                           "normal")
+ringWeightFit <- fitdistr(money$Weight[money$Type == "Ring"],
+                          "normal")
 
 # Calculate difference in calculated and fitdistr() means
 meandif <- unname(ringWeightFit$estimate[1]) - ringMean
@@ -158,16 +158,9 @@ sddif <- unname(ringWeightFit$estimate[2]) - ringSD
 #### Question 10
 *Using the R command ‘boxplot’, create a boxplot to compare ring weight across different countries.*
 
-```{r ringsByCountry}
-ringsByCountry <- melt(data = as.data.table(money["Type" = "Ring",]), 
-                       id = "Country", 
-                       measure = "Weight"
-                       )
-```
-
 ```{r p1q10, echo = FALSE}
-boxplot(value ~ Country, 
-        ringsByCountry,
+boxplot(Weight ~ Country, 
+        subset(money, money$Type == "Ring"),
         ylab = "Weight (g)",
         main = "Ring Weights by Country")
 ```
@@ -175,17 +168,33 @@ boxplot(value ~ Country,
 #### Question 11
 *Make the case (in words and/or mathematically) that average ring weight in Germany is or is not statistically different from the average ring weight in Austria.*
 
-> I will test whether or not the mean weight of Austrian and German rings are statistically different using a critical value of $\alpha_{c} = 0.05$. The null hypothesis $(H_0: \overline{x}_{German} = \overline{x}_{Austrian})$ will be tested using a student's t-test and will be rejected if $p > 0.05$. 
-
 ```{r p1q11}
-GermanVSAustrian <- t.test(ringsByCountry$value[ringsByCountry$Country == "Germany"],
-                           ringsByCountry$value[ringsByCountry$Country == "Austria"]
-                           )
+# Calculate and store the mean and standard deviation of German and Austrian
+# rings
+ringsGerman <- list("mean" = mean(money$Weight[money$Country == "Germany" 
+                                               & money$Type == "Ring"]
+                                  ),
+                    "sd" = sd(money$Weight[money$Country == "Germany" 
+                                           & money$Type == "Ring"]
+                              )
+                    )
+
+ringsAustrian <- list("mean" = mean(money$Weight[money$Country == "Austria" 
+                                                 & money$Type == "Ring"]
+                                    ),
+                      "sd" = sd(money$Weight[money$Country == "Austria" 
+                                             & money$Type == "Ring"]
+                                )
+                      )
+```
+```{r p1q11 table, echo = FALSE}
+kable(cbind(ringsGerman, ringsAustrian),
+      col.names = c("Germany", "Austria"),
+      caption = "Summary Statistics of German and Austrian Ring Weights (g)"
+      )
 ```
 
-> The average weight of Austrian rings (`r round(unname(GermanVSAustrian$estimate[2]), digits = 2)` grams) is statistically greater than the average weight of German rings (`r round(unname(GermanVSAustrian$estimate[1]), digits = 2)` grams) (p `r ifelse(GermanVSAustrian$p.value < 0.001, "< 0.001", round(GermanVSAustrian$p.value, digits = 2)) `). 
-
-\newpage
+> Since the mean weight of Austrian rings is `r ifelse(ringsGerman$mean - 1.92*ringsGerman$sd < ringsAustrian$mean & ringsAustrian$mean < ringsGerman$mean + 1.92*ringsGerman$sd, "within 1.92 standard deviations (or within the 95% confidence interval) of the German ring mean weight, then I conclude that there is no statistical difference between the German and Austrian ring samples.", "outside 1.92 standard deviations (or ourside the 95% confidence interval) of the German ring mean weight, then I conclude that there is a statistical difference between the German and Austrian ring samples.") `
 
 #### Question 12
 *So far, we’ve only been focused on ring weight. Let’s go back and make a histogram of rib weight. Why would testing a hypothesis about average rib weight be harder?*
@@ -243,15 +252,6 @@ neg.ll <- function(x, lambda){
         result <- length(x)*lambda - sum(x)*log(lambda) + sum(log(factorial(x)))
         return(result)
 }
-
-# The non-try-hard version:
-# neg.ll.v2 <- function(x, lambda){
-#       result <- -sum(dpois(x, 
-#                            lambda, 
-#                            log = TRUE)
-#                            )
-#       return(result)
-#       }
 
 ```
 
