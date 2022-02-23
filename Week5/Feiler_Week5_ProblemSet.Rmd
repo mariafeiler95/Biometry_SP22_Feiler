@@ -47,15 +47,18 @@ library(knitr)
 *One concern about applying metal tags to penguins is that doing so may increase drag in the water. In a study of the impact of foraging tags on penguin foraging efficiency, the mean length of 344 foraging trips for penguins with a metal tag was 12.70 days with a standard deviation of 3.71 days. For those with an electronic tag (which presumably would not increase drag), the mean foraging trip length was 11.60 days with standard deviation of 4.53 days over 512 trips. Calculate the confidence interval for the difference in foraging trip length and calculate the p-value for the null hypothesis that there is no difference between tag types. (Do not use the R function ‘t.test’. I’m asking you to calculate these yourself.) Do these data provide evidence that mean foraging trips are longer for penguins with a metal tag?*
 
 >An unpaired two sample t-test will be used to determine if there is a difference in foraging lengths of penguins with different tag lengths.
-
->$H_{null}: \overline{x}_{metal} = \overline{x}_{electronic}$ ; $H_{alt}: \overline{x}_{metal} \neq \overline{x}_{electronic}$
 $$
+\begin{split}
+H_{null}: \overline{x}_{metal} = \overline{x}_{electronic} \\
+H_{alt}: \overline{x}_{metal} \neq \overline{x}_{electronic}
+\end{split}
+\;\;\;\;\;\;
 \begin{split}
 \overline{x}_{metal} &= 12.70 \\
 s_{metal} &= 3.71 \\
 n_{metal} &= 344
 \end{split}
-\;\;\;
+\;\;\;\;\;\;
 \begin{split}
 \overline{x}_{electronic} &= 11.60 \\
 s_{electronic} &= 4.53 \\
@@ -94,27 +97,27 @@ $$
 
 ```{r part 1}
 # Penguins with metal tags
-metal <- list(12.70, 3.21, 344)
-names(metal) <- c("mean", "sd", "n")
+metal <- list(12.70, 3.71, 344, 3.71^2)
+names(metal) <- c("mean", "sd", "n", "var")
 
 # Penguins with electronic tags
-electronic <- list(11.60, 4.53, 512)
-names(electronic) <- c("mean", "sd", "n")
+electronic <- list(11.60, 4.53, 512, 4.53^2)
+names(electronic) <- c("mean", "sd", "n", "var")
 
-# Create list for summary statistics
+# Create list for hypothesis testing results
 penguinHypTest <- vector("list", length = 4)
 names(penguinHypTest) <- c("stErr", "t", "dof", "p")
 
 # Calculate standard error of the means
-penguinHypTest$stErr <- sqrt(((metal$sd^2)/metal$n) + ((electronic$sd^2)/electronic$n))
+penguinHypTest$stErr <- sqrt(((metal$var)/metal$n)+((electronic$var)/electronic$n))
 
 # Calculate the test statistic
-penguinHypTest$t <- (metal$mean - electronic$mean)/penguinHypTest$stErr
+penguinHypTest$t <- (metal$mean-electronic$mean)/penguinHypTest$stErr
 
 # Calculate the degrees of freedom
-top <- ((metal$sd^2/metal$n)+(electronic$sd^2/electronic$n))^2
-bottom1 <- ((metal$sd^2/metal$n)^2)/(metal$n-1)
-bottom2 <- ((electronic$sd^2/electronic$n)^2)/(electronic$n-1)
+top <- ((metal$var/metal$n)+(electronic$var/electronic$n))^2
+bottom1 <- ((metal$var/metal$n)^2)/(metal$n-1)
+bottom2 <- ((electronic$var/electronic$n)^2)/(electronic$n-1)
 
 penguinHypTest$dof <- top/(bottom1 + bottom2)
 
@@ -145,4 +148,5 @@ kable(rbind(temp),
 rm(top, bottom1, bottom2, temp)
 ```
 
->The 95% confidence interval of the difference of mean foraging length between tag types is (`r paste(round(penguinsCI$LL, digits = 3), round(penguinsCI$UL, digits = 3), sep = ", ")`). The difference in foraging lengths between penguins with different tag types is `r if(penguinHypTest$p <= 0.05) {cat("statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} else{cat("not statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} ` Therefore, the tag type has no appreciable influence on penguin foraging efficiency. 
+>The 95% confidence interval of the difference of mean foraging length between tag types is (`r paste(round(penguinsCI$LL, digits = 3), round(penguinsCI$UL, digits = 3), sep = ", ")`). The difference in foraging lengths between penguins with different tag types is `r if(penguinHypTest$p <= 0.05) {paste("statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} else{paste("not statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} ` Therefore, the tag type has no appreciable influence on penguin foraging efficiency. 
+
