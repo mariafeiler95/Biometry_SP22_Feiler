@@ -490,7 +490,7 @@ cat("The standard error of the mean mites per leaf is ",
     )
 ```
 
-> The standard error is a measure of how accurate of a representation the mean of a sample from a given population if the true population mean; the larger the standard error, the less likely your sample is representative of the true population (in mean). 
+> The standard error is a measure of how accurate of a representation the mean of a sample from a given population is of the true population mean; the larger the standard error, the less likely your sample is representative of the true population. 
 
 *e. To gain better intuition for the meaning of the standard error of the mean, create 1000 new datasets by sampling with replacement from the original dataset. Use those 1000 simulated datasests to calculate the standard error of the mean. Because of sampling error, this will not be exactly the same as what you calculated in part d, but it should be close.*
 
