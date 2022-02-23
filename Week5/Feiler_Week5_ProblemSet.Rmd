@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
 ```
 
 ## My Learning Journey
@@ -39,3 +40,109 @@ knitr::opts_chunk$set(echo = TRUE)
 > **Doing fine for now**
 
 \newpage
+
+## Problem Set
+
+### Part 1
+*One concern about applying metal tags to penguins is that doing so may increase drag in the water. In a study of the impact of foraging tags on penguin foraging efficiency, the mean length of 344 foraging trips for penguins with a metal tag was 12.70 days with a standard deviation of 3.71 days. For those with an electronic tag (which presumably would not increase drag), the mean foraging trip length was 11.60 days with standard deviation of 4.53 days over 512 trips. Calculate the confidence interval for the difference in foraging trip length and calculate the p-value for the null hypothesis that there is no difference between tag types. (Do not use the R function ‘t.test’. I’m asking you to calculate these yourself.) Do these data provide evidence that mean foraging trips are longer for penguins with a metal tag?*
+
+>An unpaired two sample t-test will be used to determine if there is a difference in foraging lengths of penguins with different tag lengths.
+
+>$H_{null}: \overline{x}_{metal} = \overline{x}_{electronic}$ ; $H_{alt}: \overline{x}_{metal} \neq \overline{x}_{electronic}$
+$$
+\begin{split}
+\overline{x}_{metal} &= 12.70 \\
+s_{metal} &= 3.71 \\
+n_{metal} &= 344
+\end{split}
+\;\;\;
+\begin{split}
+\overline{x}_{electronic} &= 11.60 \\
+s_{electronic} &= 4.53 \\
+n_{electronic} &= 512
+\end{split}
+$$
+
+>Assuming the distributions of penguin foraging lengths are normally distributed, then the distributions of foraging lengths are represented by $X_{metal} \sim N\left(\overline{x}_{metal},s_{metal}\right)$ and $X_{metal} \sim N\left(\overline{x}_{electronic},s_{electronic}\right)$ for metal and electronic tags, respectively.
+
+>Assuming that penguin foraging lengths between those with metal versus electronic tag are independent, then...
+$$
+\overline{X}_{metal} - \overline{X}_{electronic} \sim N(\overline{x}_{metal}-\overline{x}_{electronic}\;, \frac{s^{2}_{metal}}{n_{metal}}+\frac{s^{2}_{electronic}}{n_{electronic}})
+$$
+
+> Therefore, the standard error of the difference of means is given by...
+$$
+SE = \sqrt{\frac{s_{metal}^{2}}{n_{metal}}+\frac{s_{electronic}^{2}}{n_{electronic}}} \; \; ,
+$$
+
+> the test statistic is...
+$$
+T^* = \frac{\overline{x}_{A}-\overline{x}_{B}}{\sqrt{\frac{s_{A}^{2}}{n_{A}}+\frac{s_{B}^{2}}{n_{B}}}} \;\;,
+$$
+
+> and the degrees of freedom are calculated using...
+$$
+dof = \frac{\left(\frac{s_{metal}^{2}}{n_{metal}}+\frac{s_{electronic}^{2}}{n_{electronic}}\right)^{2}}{\frac{\left[\frac{s_{metal}^{2}}{n_{metal}}\right]^2}{n_{metal}-1}+\frac{\left[\frac{s_{electronic}^{2}}{n_{electronic}}\right]^2}{n_{electronic}-1}} \;\;.
+$$
+
+> Finally, the 95 percentile confidence interval of the difference in means is given by...
+$$
+\overline{x}_{metal} + \overline{x}_{electronic} \; \pm \; z\sqrt{\frac{s^{2}_{metal}}{n_{metal}}+\frac{s^{2}_{electronic}}{n_{electronic}}}
+$$
+
+>... where z is 1.96, or the z-value corresponding with 95% confidence. 
+
+```{r part 1}
+# Penguins with metal tags
+metal <- list(12.70, 3.21, 344)
+names(metal) <- c("mean", "sd", "n")
+
+# Penguins with electronic tags
+electronic <- list(11.60, 4.53, 512)
+names(electronic) <- c("mean", "sd", "n")
+
+# Create list for summary statistics
+penguinHypTest <- vector("list", length = 4)
+names(penguinHypTest) <- c("stErr", "t", "dof", "p")
+
+# Calculate standard error of the means
+penguinHypTest$stErr <- sqrt(((metal$sd^2)/metal$n) + ((electronic$sd^2)/electronic$n))
+
+# Calculate the test statistic
+penguinHypTest$t <- (metal$mean - electronic$mean)/penguinHypTest$stErr
+
+# Calculate the degrees of freedom
+top <- ((metal$sd^2/metal$n)+(electronic$sd^2/electronic$n))^2
+bottom1 <- ((metal$sd^2/metal$n)^2)/(metal$n-1)
+bottom2 <- ((electronic$sd^2/electronic$n)^2)/(electronic$n-1)
+
+penguinHypTest$dof <- top/(bottom1 + bottom2)
+
+# Find the p value
+penguinHypTest$p <- pt(penguinHypTest$t, 
+                       penguinHypTest$dof,
+                       lower.tail = TRUE
+                       )
+
+# Calculate the 95% confidence interval 
+penguinsCI <- vector("list", length = 2)
+names(penguinsCI) <- c("LL", "UL")
+
+penguinsCI$LL <- metal$mean-electronic$mean-1.96*penguinHypTest$stErr
+penguinsCI$UL <- metal$mean-electronic$mean+1.96*penguinHypTest$stErr
+```
+
+```{r part 1 ans, echo = FALSE}
+temp <- c()
+for (i in 1:length(penguinHypTest)){temp[i] <- round(penguinHypTest[[i]], digits = 2)}
+
+kable(rbind(temp),
+      caption = "Two-Sample t-Test Results",
+      col.names = c("SE", "T*", "dof", "p"),
+      row.names = FALSE
+      )
+
+rm(top, bottom1, bottom2, temp)
+```
+
+>The 95% confidence interval of the difference of mean foraging length between tag types is (`r paste(round(penguinsCI$LL, digits = 3), round(penguinsCI$UL, digits = 3), sep = ", ")`). The difference in foraging lengths between penguins with different tag types is `r if(penguinHypTest$p <= 0.05) {cat("statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} else{cat("not statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} ` Therefore, the tag type has no appreciable influence on penguin foraging efficiency. 
