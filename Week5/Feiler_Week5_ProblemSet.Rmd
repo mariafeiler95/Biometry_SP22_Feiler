@@ -477,11 +477,15 @@ ggplot(melt(as.data.table(water), measure.vars = c(1,2)),
 *What is the equation for and numerical value of the test statistic for testing this null hypothesis?*
 
 ```{r p3q1, comment = NA}
-field1 <- var(water$Field1, na.rm = TRUE)
-field2 <- var(water$Field2, na.rm = TRUE)
+field1 <- list("n" = length(na.omit(water$Field1)),
+               "var" = var(water$Field1, na.rm = TRUE)
+               )
+field2 <- list("n" = length(na.omit(water$Field2)),
+               "var" = var(water$Field2, na.rm = TRUE)
+               )
 
 # Determine which is the larger variance
-field1 > field2
+field1$var > field2$var
 ```
 
 Therefore, the test statistic will be calculated using the following: 
@@ -490,10 +494,53 @@ F_{s}=\frac{s_{Field2}^{2}}{s_{Field1}^{2}}
 $$
 
 ```{r p3q1 Fs}
-Fs <- field2/field1
+# Rename lower sample size as m
+names(field1)[1] <- "m"
+
+# Calculate test statistic F*
+Fs <- field2$var/field1$var
 ```
 
 The value of the test statistic is `r round(Fs, digits = 3)`.
+
+#### Question 2
+*If we assume a two-sided test, what is the p-value for testing this null hypothesis? (Use the test statistic from 1 and the appropriate distribution under the null hypothesis.)*
+
+For a two tailed test, the p-value will be calculated using
+$$\frac{s_{Field2}^{2}}{s_{Field1}^{2}} > F_{[1-\frac{\alpha}{2}](n-1,\;m-1)}\;\;.$$
+Under the null hypothesis, 
+
+$$(F_{s}=\frac{s_{Field2}^{2}}{s_{Field1}^{2}}|H_{0}) \sim F_{n-1,\;m-1}\;\;.$$
+
+```{r p3q2}
+# Calculate one-sided p_value
+p_value <- 1-pf(Fs, 
+                df1 = field2$n-1, 
+                df2 = field1$m-1
+                )
+
+# Multiply by two to get the two-tailed p_value
+p_value <- 2*p_value
+```
+
+The p_value for the difference in sample variances between the two samples is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
+
+#### Question 3
+*What is the p-value if we are interesting only in $H_A: \sigma_{Field1}^2>\sigma_{Field2}^2$?*
+$$\frac{s_{Field1}^{2}}{s_{Field2}^{2}} > F_{[1-\alpha](n-1,\;m-1)}\;\;.$$
+
+```{r p3q3}
+# Calculate test statistic F*
+Fs <- field1$var/field2$var
+
+# Calculate one-sided p_value
+p_value <- pf(Fs, 
+              df1 = field1$m-1, 
+              df2 = field2$n-1
+              )
+```
+
+The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
 
 \newpage
 ## Extra Work
