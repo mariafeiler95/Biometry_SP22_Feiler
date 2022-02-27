@@ -11,6 +11,7 @@ library(knitr)
 library(readr)
 library(dplyr)
 library(ggpubr)
+library(data.table)
 ```
 
 ## My Learning Journey
@@ -380,6 +381,119 @@ The difference in median blood glucose levels between males and females is (`r r
 *If these were your data, under what circumstances would you feel comfortable lumping the data for each location together? Assuming you could lump the data together, what would be one advantage of doing so?*
 
 In the case of this data, it would depend on what question I was asking. For something like blood glucose, which is dependent on so many socioeconomic and biological factors, my first instinct is to not lump the locations together to preserve potential differences in food quality, stress, health care availability, etc. If I were interested in the whole of England, I would probably lump them together, though I would question why I only sampled two cities to characterize a whole country. In the event I can lump the data together, I am gaining more power in my statistical tests due to the higher sample size and the assumption that the variance/mean is similar across the samples. 
+
+\newpage
+
+### Part III
+*Download the dataset “WaterSamples.csv”, which represent soil water content (% water by volume) for independent random samples of soil from two experimental fields growing bell peppers. (Reference: Journal of Agricultural, Biological, and Environmental Statistics, Vol. 2, No. 2, p 149-155)*
+
+*Here we are interested in the variance within each field, with the null hypothesis: $H_0: \sigma_{Field1}^2=\sigma_{Field2}^2$*
+
+```{r water, cache = TRUE}
+link <- "https://raw.githubusercontent.com/hlynch/Biometry2022/master/_data/WaterData.csv"
+water <- read_csv(link,
+                  show_col_types = FALSE
+                  )
+```
+
+```{r water table, echo = FALSE, comment = NA, cache = TRUE}
+kable(as.data.frame(water[sample(seq(1, length(water$Field1)), 5, replace = FALSE),]),
+      caption = "A selection of soil water content data (% water by volume).",
+      row.names = FALSE,
+      col.names = c("Field 1", "Field 2")
+      )
+
+rm(link)
+```
+
+```{r water hist, echo = FALSE, out.width = "70%", fig.align="center", warning=FALSE}
+ggplot(melt(as.data.table(water), measure.vars = c(1,2)), 
+       aes(x = value, fill = variable)) +
+        geom_histogram(position = "identity",
+                       colour = "black",
+                       alpha = 0.33, 
+                       bins = 30
+                       ) +
+        theme_classic() +
+        labs(title = "Soil Water Content \n of Two Experimental Bell Pepper Fields",
+             fill = NULL) + 
+        xlab("Soil Water Content (% water by volume)") +
+        ylab("Frequency") +
+        theme(plot.title = element_text(hjust = 0.5,
+                                        size = 18,
+                                        margin = margin(t = 10, 
+                                                        r = 0, 
+                                                        b = 10, 
+                                                        l = 0
+                                                        )
+                                        ),
+              legend.position = c(0.9, 0.85),
+              legend.title = element_text(size = 1),
+              legend.text = element_text(size = 12),
+              legend.key.size = unit(0.5, "cm"),
+              axis.text.x = element_text(color = "black", 
+                                         size = 12,
+                                         margin = margin(t = 5, 
+                                                         r = 0, 
+                                                         b = 0, 
+                                                         l = 0),
+                                         hjust = 0.5
+                                         ),
+              axis.title.x = element_text(size = 14,
+                                          margin = margin(t = 10, 
+                                                          r = 0, 
+                                                          b = 0, 
+                                                          l = 0
+                                                          )
+                                          ),
+              axis.ticks.length = unit(0.25, "cm"),
+              axis.text.y = element_text(color = "black",
+                                         size = 12,
+                                         margin = margin(t = 0, 
+                                                         r = 5, 
+                                                         b = 0, 
+                                                         l = 0
+                                                         )
+                                         ),
+              axis.title.y = element_text(size = 14,
+                                          margin = margin(t = 0, 
+                                                          r = 10, 
+                                                          b = 0, 
+                                                          l = 0
+                                                          )
+                                          ),
+              axis.line = NULL,
+              panel.border = element_rect(colour = "black", 
+                                          fill = NA, 
+                                          size = 1
+                                          )
+              )
+         
+```
+
+\newpage
+
+#### Question 1
+*What is the equation for and numerical value of the test statistic for testing this null hypothesis?*
+
+```{r p3q1, comment = NA}
+field1 <- var(water$Field1, na.rm = TRUE)
+field2 <- var(water$Field2, na.rm = TRUE)
+
+# Determine which is the larger variance
+field1 > field2
+```
+
+Therefore, the test statistic will be calculated using the following: 
+$$
+F_{s}=\frac{s_{Field2}^{2}}{s_{Field1}^{2}}
+$$
+
+```{r p3q1 Fs}
+Fs <- field2/field1
+```
+
+The value of the test statistic is `r round(Fs, digits = 3)`.
 
 \newpage
 ## Extra Work
