@@ -542,6 +542,23 @@ p_value <- pf(Fs,
 
 The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
 
+#### Question 4
+*What is the p-value if we are interesting only in $H_A: \sigma_{Field1}^2<\sigma_{Field2}^2$?
+```{r p3q3}
+# Calculate test statistic F*
+Fs <- field2$var/field1$var
+
+# Calculate one-sided p_value
+p_value <- pf(Fs, 
+              df1 = field1$m-1, 
+              df2 = field2$n-1
+              )
+```
+
+The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
+
+
+
 \newpage
 ## Extra Work
 
