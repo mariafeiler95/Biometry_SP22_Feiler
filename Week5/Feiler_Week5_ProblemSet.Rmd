@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(readr)
 library(dplyr)
+library(ggpubr)
 ```
 
 ## My Learning Journey
@@ -48,7 +49,7 @@ library(dplyr)
 ### Part I
 *One concern about applying metal tags to penguins is that doing so may increase drag in the water. In a study of the impact of foraging tags on penguin foraging efficiency, the mean length of 344 foraging trips for penguins with a metal tag was 12.70 days with a standard deviation of 3.71 days. For those with an electronic tag (which presumably would not increase drag), the mean foraging trip length was 11.60 days with standard deviation of 4.53 days over 512 trips. Calculate the confidence interval for the difference in foraging trip length and calculate the p-value for the null hypothesis that there is no difference between tag types. (Do not use the R function ‘t.test’. I’m asking you to calculate these yourself.) Do these data provide evidence that mean foraging trips are longer for penguins with a metal tag?*
 
->An unpaired two sample t-test will be used to determine if there is a difference in foraging lengths of penguins with different tag lengths.
+An unpaired two sample t-test will be used to determine if there is a difference in foraging lengths of penguins with different tag lengths.
 $$
 \begin{split}
 H_{null}: \overline{x}_{metal} = \overline{x}_{electronic} \\
@@ -68,34 +69,34 @@ n_{electronic} &= 512
 \end{split}
 $$
 
->Assuming the distributions of penguin foraging lengths are normally distributed, then the distributions of foraging lengths are represented by $X_{metal} \sim N\left(\overline{x}_{metal},s_{metal}\right)$ and $X_{metal} \sim N\left(\overline{x}_{electronic},s_{electronic}\right)$ for metal and electronic tags, respectively.
+Assuming the distributions of penguin foraging lengths are normally distributed, then the distributions of foraging lengths are represented by $X_{metal} \sim N\left(\overline{x}_{metal},s_{metal}\right)$ and $X_{metal} \sim N\left(\overline{x}_{electronic},s_{electronic}\right)$ for metal and electronic tags, respectively.
 
->Assuming that penguin foraging lengths between those with metal versus electronic tag are independent, then...
+Assuming that penguin foraging lengths between those with metal versus electronic tag are independent, then...
 $$
 \overline{X}_{metal} - \overline{X}_{electronic} \sim N(\overline{x}_{metal}-\overline{x}_{electronic}\;, \frac{s^{2}_{metal}}{n_{metal}}+\frac{s^{2}_{electronic}}{n_{electronic}})
 $$
 
-> Therefore, the standard error of the difference of means is given by...
+Therefore, the standard error of the difference of means is given by...
 $$
 SE = \sqrt{\frac{s_{metal}^{2}}{n_{metal}}+\frac{s_{electronic}^{2}}{n_{electronic}}} \; \; ,
 $$
 
-> the test statistic is...
+the test statistic is...
 $$
 T^* = \frac{\overline{x}_{A}-\overline{x}_{B}}{\sqrt{\frac{s_{A}^{2}}{n_{A}}+\frac{s_{B}^{2}}{n_{B}}}} \;\;,
 $$
 
-> and the degrees of freedom are calculated using...
+and the degrees of freedom are calculated using...
 $$
 dof = \frac{\left(\frac{s_{metal}^{2}}{n_{metal}}+\frac{s_{electronic}^{2}}{n_{electronic}}\right)^{2}}{\frac{\left[\frac{s_{metal}^{2}}{n_{metal}}\right]^2}{n_{metal}-1}+\frac{\left[\frac{s_{electronic}^{2}}{n_{electronic}}\right]^2}{n_{electronic}-1}} \;\;.
 $$
 
-> Finally, the 95 percentile confidence interval of the difference in means is given by...
+Finally, the 95 percentile confidence interval of the difference in means is given by...
 $$
 \overline{x}_{metal} + \overline{x}_{electronic} \; \pm \; z\sqrt{\frac{s^{2}_{metal}}{n_{metal}}+\frac{s^{2}_{electronic}}{n_{electronic}}}
 $$
 
->... where z is 1.96, or the z-value corresponding with 95% confidence. 
+... where z is 1.96, or the z-value corresponding with 95% confidence. 
 
 ```{r part 1}
 # Penguins with metal tags
@@ -125,8 +126,7 @@ penguinHypTest$dof <- top/(bottom1 + bottom2)
 
 # Find the p value
 penguinHypTest$p <- 2*pt(penguinHypTest$t, 
-                         penguinHypTest$dof,
-                         lower = FALSE
+                         penguinHypTest$dof
                          )
 
 # Calculate the 95% confidence interval 
@@ -150,7 +150,7 @@ kable(rbind(temp),
 rm(top, bottom1, bottom2, temp)
 ```
 
->The 95% confidence interval of the difference of mean foraging length between tag types is (`r paste(round(penguinsCI$LL, digits = 3), round(penguinsCI$UL, digits = 3), sep = ", ")`). The difference in foraging lengths between penguins with different tag types is `r if(penguinHypTest$p <= 0.05) {paste("statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} else{paste("not statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} ` Therefore, the tag type has `r if(penguinHypTest$p <= 0.05) {paste("an appreciable")} else{paste("no appreciable")} ` influence on penguin foraging efficiency. 
+The 95% confidence interval of the difference of mean foraging length between tag types is (`r paste(round(penguinsCI$LL, digits = 3), round(penguinsCI$UL, digits = 3), sep = ", ")`). The difference in foraging lengths between penguins with different tag types is `r if(penguinHypTest$p <= 0.05) {paste("statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} else{paste("not statistically significant (p = ", round(penguinHypTest$p, digits = 3),").", sep = "")} ` Therefore, the tag type has `r if(penguinHypTest$p <= 0.05) {paste("an appreciable")} else{paste("no appreciable")} ` influence on penguin foraging efficiency. 
 
 \newpage
 
@@ -177,15 +177,223 @@ kable(as.data.frame(diabetes[sample(seq(1, length(diabetes$sex)), 10, replace = 
 
 rm(link)
 ```
+```{r diabetes hist, echo = FALSE, out.width = "70%", fig.align="center"}
+ggplot(diabetes, aes(x = stab.glu, fill = sex)) +
+        geom_histogram(position = "identity",
+                       colour = "black",
+                       alpha = 0.33, 
+                       bins = 30
+                       ) +
+        theme_classic() +
+        labs(title = "Male and Female Blood Glucose Levels in England",
+             fill = "Sex") + 
+        xlab("Blood Glucose (mmol/L)") +
+        ylab("Frequency") +
+        theme(plot.title = element_text(hjust = 0.5,
+                                        size = 18,
+                                        margin = margin(t = 10, 
+                                                        r = 0, 
+                                                        b = 10, 
+                                                        l = 0
+                                                        )
+                                        ),
+              legend.position = c(0.9,0.85),
+              legend.text = element_text(size = 12),
+              legend.title = element_text(size = 14),
+              legend.key.size = unit(0.5, "cm"),
+              axis.text.x = element_text(color = "black", 
+                                         size = 12,
+                                         margin = margin(t = 5, 
+                                                         r = 0, 
+                                                         b = 0, 
+                                                         l = 0),
+                                         hjust = 0.5
+                                         ),
+              axis.title.x = element_text(size = 14,
+                                          margin = margin(t = 10, 
+                                                          r = 0, 
+                                                          b = 0, 
+                                                          l = 0
+                                                          )
+                                          ),
+              axis.ticks.length = unit(0.25, "cm"),
+              axis.text.y = element_text(color = "black",
+                                         size = 12,
+                                         margin = margin(t = 0, 
+                                                         r = 5, 
+                                                         b = 0, 
+                                                         l = 0
+                                                         )
+                                         ),
+              axis.title.y = element_text(size = 14,
+                                          margin = margin(t = 0, 
+                                                          r = 10, 
+                                                          b = 0, 
+                                                          l = 0
+                                                          )
+                                          ),
+              axis.line = NULL,
+              panel.border = element_rect(colour = "black", 
+                                          fill = NA, 
+                                          size = 1
+                                          )
+              )
+         
+```
+
+\newpage
 
 #### Question 1
 *Aggregating across locations, calculate the test statistic for the t-test to test the null hypothesis that males and females do not differ in their average blood glucose levels and compare it to its distribution under the null hypothesis.*
 
-```{r p2q1, comment = NA}
+An unpaired two sample t-test will be used to determine if there is a difference between male and female blood glucose levels in England.
+$$
+\begin{split}
+H_{null}: \overline{x}_{male} = \overline{x}_{female}
+\end{split}
+\;\;\;\;
+\begin{split}
+H_{alt}: \overline{x}_{male} \neq \overline{x}_{female}
+\end{split}
+$$
+
+```{r p2q1, cache = TRUE}
+# Males
+males <- list(mean(diabetes$stab.glu[diabetes$sex == "male"]), 
+              sd(diabetes$stab.glu[diabetes$sex == "male"]), 
+              sum(diabetes$sex == "male"),
+              var(diabetes$stab.glu[diabetes$sex == "male"])
+              )
+names(males) <- c("mean", "sd", "n", "var")
+
+# Females
+females <- list(mean(diabetes$stab.glu[diabetes$sex == "female"]), 
+                sd(diabetes$stab.glu[diabetes$sex == "female"]), 
+                sum(diabetes$sex == "female"),
+                var(diabetes$stab.glu[diabetes$sex == "female"])
+                )
+names(females) <- c("mean", "sd", "n", "var")
+
+# Create list for hypothesis testing results
+diabetesHypTest <- vector("list", length = 4)
+names(diabetesHypTest) <- c("stErr", "t", "dof", "p")
+
+# Calculate standard error of the means
+diabetesHypTest$stErr <- sqrt(((males$var)/males$n)+((females$var)/females$n))
+
+# Calculate the test statistic
+diabetesHypTest$t <- (males$mean-females$mean)/diabetesHypTest$stErr
+
+# Calculate the degrees of freedom
+top <- ((males$var/males$n)+(females$var/females$n))^2
+bottom1 <- ((males$var/males$n)^2)/(males$n-1)
+bottom2 <- ((females$var/females$n)^2)/(females$n-1)
+
+diabetesHypTest$dof <- top/(bottom1 + bottom2)
+
+# Find the p value
+diabetesHypTest$p <- 2*pt(diabetesHypTest$t, 
+                          diabetesHypTest$dof,
+                          lower = FALSE
+                          )
+
+# Calculate the 95% confidence interval 
+diabetesCI <- vector("list", length = 2)
+names(diabetesCI) <- c("LL", "UL")
+
+diabetesCI$LL <- males$mean-females$mean-1.96*diabetesHypTest$stErr
+diabetesCI$UL <- males$mean-females$mean+1.96*diabetesHypTest$stErr
+```
+```{r p2q1 diabetes table, echo = FALSE}
+temp <- c()
+for (i in 1:length(diabetesHypTest)){temp[i] <- round(diabetesHypTest[[i]], digits = 3)}
+
+temp2 <- c()
+for (i in 1:length(diabetesCI)){temp2[i] <- round(diabetesCI[[i]], digits = 3)}
+
+kable(cbind(rbind(temp), rbind(temp2)),
+      caption = "Male and female blood glucose two-sample t-test results.",
+      col.names = c("SE", "T*", "dof", "p", "95CI Lower", "95CI Upper"),
+      row.names = FALSE
+      )
+
+rm(top, bottom1, bottom2, temp, temp2)
+```
+
+#### Question 2
+*Compare your results with the R function “t.test”. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
+
+```{r p2q2, comment = NA}
+diabetesttest <- t.test(diabetes$stab.glu[diabetes$sex == "male"],
+                        diabetes$stab.glu[diabetes$sex == "female"]
+                        )
+```
+```{r p2q2 ttest, echo = FALSE, comment = NA}
+diabetesttest$data.name <- "Males and Females"
+names(diabetesttest$estimate) <- c("Mean Male Glucose", "Mean Female Glucose")
+
+diabetesttest
+```
+
+The p-values produced by the t.test() calculations are the same as the p-values obtained from manual test statistic calculations.
+
+#### Question 3
+*Interpret your results in words as you would in the results section of a manuscript (1-2 sentences)*
+
+An unpaired two sample t-test was used to test if there was a significant difference between the blood glucose levels of males (`r paste(round(males$mean, digits = 2))`$\pm$ `r paste(round(males$sd, digits = 2))`) and females (`r paste(round(females$mean, digits = 2))`$\pm$ `r paste(round(females$sd, digits = 2))` ). At the critical value of $\alpha_{C} = 0.05$, the difference between male and female blood glucose levels is `r if(diabetesHypTest$p <= 0.05) {paste("statistically significant (p = ", round(diabetesHypTest$p, digits = 3), ", t* = ", round(diabetesHypTest$t, digits = 3), ", df = ", round(diabetesHypTest$dof, digits = 2), ")", sep = "")} else {paste("not statistically significant (p = ", round(diabetesHypTest$p, digits = 3), ", t* = ", round(diabetesHypTest$t, digits = 3), ", df = ", round(diabetesHypTest$dof, digits = 2), ")", sep = "")} `, and the null hypothesis is `r ifelse(diabetesHypTest$p <= 0.05, paste("rejected."), paste("not rejected.")) ` The 95^th^ percentile confidence interval for the difference in mean blood glucose levels between males and females is (`r paste(round(diabetesCI$LL, digits = 2), ", ", round(diabetesCI$UL, digits = 2), sep = "")`), suggesting that the females had `r ifelse(males$mean - females$mean > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
+
+#### Question 4
+*How would the results differ if you used the median rather than the mean as the test statistic? Write a script to test the null hypothesis $H_0: median_{male} = median_{female}$. Keep in mind that you will have to determine the distribution of the test statistic under the null hypothesis.*
+```{r p1q4}
+# This code was sourced in part from the original poster's updated code: 
+# https://stats.stackexchange.com/questions/176691/running-a-permutation-test-with-
+# different-sample-sizes-in-r/176714
+
+# Calculate thesample difference in medians
+theta_hat <- median(diabetes$stab.glu[diabetes$sex == "male"]) - 
+        median(diabetes$stab.glu[diabetes$sex == "female"])
+
+# Create vector capture the permutation test results 
+dif <- c()
+
+# Create vector of the differences between the sample permutation medians
+for (i in 1:1000) {
+        samp <- sample(x = c(diabetes$stab.glu[diabetes$sex == "male"],
+                             diabetes$stab.glu[diabetes$sex == "female"]),
+                       replace = FALSE)
+
+        samp_male <- samp[1:sum(diabetes$sex == "male")]
+        samp_female <- samp[sum(diabetes$sex == "male")+1:sum(diabetes$sex == "female")]
+        
+        dif[i] <- median(samp_male) - median(samp_female)
+}
+
+p_value <- sum(abs(dif) > abs(theta_hat))/length(dif)
+```
+
+The difference between the male and female permutation medians was `r round(mean(dif), digits = 2)` $\pm$ `r round(sd(dif), digits = 2)`. The quartiles of the permutations were `r paste(round(quantile(dif), digits = 2), "(", c("0%", "25%", "50%", "75%", "100%"), ")", sep = "")`.
+The p-value of the original sample is `r p_value`. At $\alpha_c=0.05$, the null hypothesis is `r ifelse(p_value > 0.05, "rejected.", "accepted.")`.
+
+The difference in median blood glucose levels between males and females is (`r round(theta_hat, digits = 3)`), suggesting that the females had `r ifelse(theta_hat > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
+
+#### Question 5
+*If these were your data, under what circumstances would you feel comfortable lumping the data for each location together? Assuming you could lump the data together, what would be one advantage of doing so?*
+
+In the case of this data, it would depend on what question I was asking. For something like blood glucose, which is dependent on so many socioeconomic and biological factors, my first instinct is to not lump the locations together to preserve potential differences in food quality, stress, health care availability, etc. If I were interested in the whole of England, I would probably lump them together, though I would question why I only sampled two cities to characterize a whole country. In the event I can lump the data together, I am gaining more power in my statistical tests due to the higher sample size and the assumption that the variance/mean is similar across the samples. 
+
+\newpage
+## Extra Work
+
+### Part II Questions 2-4, Locations Separated
+
+#### Question 1
+*Aggregating across locations, calculate the test statistic for the t-test to test the null hypothesis that males and females do not differ in their average blood glucose levels and compare it to its distribution under the null hypothesis.*
+
+```{r p2q1 uniques, comment = NA}
 # Get unique location names
 uniqueLoc <- unique(diabetes$location)
 ```
-```{r p2q1 uniques, echo = FALSE, comment = NA}
+```{r p2q1 uniques display, echo = FALSE, comment = NA}
 cat(uniqueLoc)
 ```
 ```{r p2q1 divide}
@@ -195,9 +403,9 @@ Louisa <- diabetes[which(diabetes$location == uniqueLoc[1]), c("sex", "stab.glu"
 Bucky <- diabetes[which(diabetes$location == uniqueLoc[2]), c("sex", "stab.glu")]
 ```
 
->**Louisa**
+**Louisa**
   
->An unpaired two sample t-test will be used to determine if there is a difference between male and female blood glucose levels in Louisa, England.
+An unpaired two sample t-test will be used to determine if there is a difference between male and female blood glucose levels in Louisa, England.
 $$
 \begin{split}
 H_{null}: \overline{x}_{male} = \overline{x}_{female}
@@ -217,43 +425,42 @@ LMales <- list(mean(Louisa$stab.glu[Louisa$sex == "male"]),
                )
 names(LMales) <- c("mean", "sd", "n", "var")
 
-# Females
-LFemales <- list(mean(Louisa$stab.glu[Louisa$sex == "female"]), 
+# females
+Lfemales <- list(mean(Louisa$stab.glu[Louisa$sex == "female"]), 
                  sd(Louisa$stab.glu[Louisa$sex == "female"]), 
                  sum(Louisa$sex == "female"),
                  var(Louisa$stab.glu[Louisa$sex == "female"])
                  )
-names(LFemales) <- c("mean", "sd", "n", "var")
+names(Lfemales) <- c("mean", "sd", "n", "var")
 
 # Create list for hypothesis testing results
 LouisaHypTest <- vector("list", length = 4)
 names(LouisaHypTest) <- c("stErr", "t", "dof", "p")
 
 # Calculate standard error of the means
-LouisaHypTest$stErr <- sqrt(((LMales$var)/LMales$n)+((LFemales$var)/LFemales$n))
+LouisaHypTest$stErr <- sqrt(((LMales$var)/LMales$n)+((Lfemales$var)/Lfemales$n))
 
 # Calculate the test statistic
-LouisaHypTest$t <- (LMales$mean-LFemales$mean)/LouisaHypTest$stErr
+LouisaHypTest$t <- (LMales$mean-Lfemales$mean)/LouisaHypTest$stErr
 
 # Calculate the degrees of freedom
-top <- ((LMales$var/LMales$n)+(LFemales$var/LFemales$n))^2
+top <- ((LMales$var/LMales$n)+(Lfemales$var/Lfemales$n))^2
 bottom1 <- ((LMales$var/LMales$n)^2)/(LMales$n-1)
-bottom2 <- ((LFemales$var/LFemales$n)^2)/(LFemales$n-1)
+bottom2 <- ((Lfemales$var/Lfemales$n)^2)/(Lfemales$n-1)
 
 LouisaHypTest$dof <- top/(bottom1 + bottom2)
 
 # Find the p value
 LouisaHypTest$p <- 2*pt(LouisaHypTest$t, 
-                         LouisaHypTest$dof,
-                         lower = FALSE
-                         )
+                        LouisaHypTest$dof
+                        )
 
 # Calculate the 95% confidence interval 
 LouisaCI <- vector("list", length = 2)
 names(LouisaCI) <- c("LL", "UL")
 
-LouisaCI$LL <- LMales$mean-LFemales$mean-1.96*LouisaHypTest$stErr
-LouisaCI$UL <- LMales$mean-LFemales$mean+1.96*LouisaHypTest$stErr
+LouisaCI$LL <- LMales$mean-Lfemales$mean-1.96*LouisaHypTest$stErr
+LouisaCI$UL <- LMales$mean-Lfemales$mean+1.96*LouisaHypTest$stErr
 ```
 ```{r p2q1 Louisa table, echo = FALSE}
 temp <- c()
@@ -272,9 +479,9 @@ rm(top, bottom1, bottom2, temp, temp2)
 ```
 
 \newpage
->**Buckingham**
+**Buckingham**
   
->An unpaired two sample t-test will be used to determine if there is a difference between male and female blood glucose levels in Buckingham, England.
+An unpaired two sample t-test will be used to determine if there is a difference between male and female blood glucose levels in Buckingham, England.
 $$
 \begin{split}
 H_{null}: \overline{x}_{male} = \overline{x}_{female}
@@ -295,42 +502,41 @@ BMales <- list(mean(Bucky$stab.glu[Bucky$sex == "male"]),
 names(BMales) <- c("mean", "sd", "n", "var")
 
 # Females
-BFemales <- list(mean(Bucky$stab.glu[Bucky$sex == "female"]), 
+Bfemales <- list(mean(Bucky$stab.glu[Bucky$sex == "female"]), 
                  sd(Bucky$stab.glu[Bucky$sex == "female"]), 
                  sum(Bucky$sex == "female"),
                  var(Bucky$stab.glu[Bucky$sex == "female"])
                  )
-names(BFemales) <- c("mean", "sd", "n", "var")
+names(Bfemales) <- c("mean", "sd", "n", "var")
 
 # Create list for hypothesis testing results
 BuckyHypTest <- vector("list", length = 4)
 names(BuckyHypTest) <- c("stErr", "t", "dof", "p")
 
 # Calculate standard error of the means
-BuckyHypTest$stErr <- sqrt(((BMales$var)/BMales$n)+((BFemales$var)/BFemales$n))
+BuckyHypTest$stErr <- sqrt(((BMales$var)/BMales$n)+((Bfemales$var)/Bfemales$n))
 
 # Calculate the test statistic
-BuckyHypTest$t <- (BMales$mean-BFemales$mean)/BuckyHypTest$stErr
+BuckyHypTest$t <- (BMales$mean-Bfemales$mean)/BuckyHypTest$stErr
 
 # Calculate the degrees of freedom
-top <- ((BMales$var/BMales$n)+(BFemales$var/BFemales$n))^2
+top <- ((BMales$var/BMales$n)+(Bfemales$var/Bfemales$n))^2
 bottom1 <- ((BMales$var/BMales$n)^2)/(BMales$n-1)
-bottom2 <- ((BFemales$var/BFemales$n)^2)/(BFemales$n-1)
+bottom2 <- ((Bfemales$var/Bfemales$n)^2)/(Bfemales$n-1)
 
 BuckyHypTest$dof <- top/(bottom1 + bottom2)
 
 # Find the p value
 BuckyHypTest$p <- 2*pt(BuckyHypTest$t, 
-                       BuckyHypTest$dof,
-                       lower = FALSE
+                       BuckyHypTest$dof
                        )
 
 # Calculate the 95% confidence interval 
 BuckyCI <- vector("list", length = 2)
 names(BuckyCI) <- c("LL", "UL")
 
-BuckyCI$LL <- BMales$mean-BFemales$mean-1.96*BuckyHypTest$stErr
-BuckyCI$UL <- BMales$mean-BFemales$mean+1.96*BuckyHypTest$stErr
+BuckyCI$LL <- BMales$mean-Bfemales$mean-1.96*BuckyHypTest$stErr
+BuckyCI$UL <- BMales$mean-Bfemales$mean+1.96*BuckyHypTest$stErr
 ```
 ```{r p2q1 Bucky table, echo = FALSE}
 temp <- c()
@@ -351,7 +557,7 @@ rm(top, bottom1, bottom2, temp, temp2)
 #### Question 2
 *Compare your results with the R function “t.test”. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
 
-```{r p2q2}
+```{r p2q2 extra}
 ttestLouisa <- t.test(Louisa$stab.glu[Louisa$sex == "male"], 
                       Louisa$stab.glu[Louisa$sex == "female"]
                       )
@@ -362,21 +568,21 @@ ttestBucky <- t.test(Bucky$stab.glu[Louisa$sex == "male"],
 ```
 
 ```{r p2q2 ttest results, echo = FALSE, comment = NA}
-ttestLouisa$data.name <- "Louisa Males and Females"
+ttestLouisa$data.name <- "Louisa Males and females"
 names(ttestLouisa$estimate) <- c("Mean Male Glucose", "Mean Female Glucose")
 
-ttestBucky$data.name <- "Buckingham Males and Females"
+ttestBucky$data.name <- "Buckingham Males and females"
 names(ttestBucky$estimate) <- c("Mean Male Glucose", "Mean Female Glucose")
 
 ttestLouisa
 ttestBucky
 ```
 
->The p-values produced by the t.test() calculations are the same as the p-values obtained from manual test statistic calculations.
+The p-values produced by the t.test() calculations are the same as the p-values obtained from manual test statistic calculations.
 
 #### Question 3
 *Interpret your results in words as you would in the results section of a manuscript (1-2 sentences)*
 
-An unpaired two sample t-test was used to test if there was a significant difference between the blood glucose levels of Louisa males (`r paste(round(LMales$mean, digits = 2))`$\pm$ `r paste(round(LMales$sd, digits = 2))`) and females (`r paste(round(LFemales$mean, digits = 2))`$\pm$ `r paste(round(LFemales$sd, digits = 2))` ). At the critical value of $\alpha_{C} = 0.05$, the difference between Louisa male and female blood glucose levels is `r if(LouisaHypTest$p <= 0.05) {paste("statistically significant (p = ", round(LouisaHypTest$p, digits = 3), ", t* = ", round(LouisaHypTest$t, digits = 3), ", df = ", round(LouisaHypTest$dof, digits = 2), ")", sep = "")} else {paste("not statistically significant (p = ", round(LouisaHypTest$p, digits = 3), ", t* = ", round(LouisaHypTest$t, digits = 3), ", df = ", round(LouisaHypTest$dof, digits = 2), ")", sep = "")} `, and the null hypothesis is `r ifelse(LouisaHypTest$p <= 0.05, paste("rejected."), paste("not rejected.")) ` The 95^th^ percentile confidence interval for the difference in mean blood glucose levels between Louisa males and females is (`r paste(round(LouisaCI$LL, digits = 2), ", ", round(LouisaCI$UL, digits = 2), sep = "")`), suggesting that the Louisa females had `r ifelse(LMales$mean - LFemales$mean > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
+An unpaired two sample t-test was used to test if there was a significant difference between the blood glucose levels of Louisa males (`r paste(round(LMales$mean, digits = 2))`$\pm$ `r paste(round(LMales$sd, digits = 2))`) and females (`r paste(round(Lfemales$mean, digits = 2))`$\pm$ `r paste(round(Lfemales$sd, digits = 2))` ). At the critical value of $\alpha_{C} = 0.05$, the difference between Louisa male and female blood glucose levels is `r if(LouisaHypTest$p <= 0.05) {paste("statistically significant (p = ", round(LouisaHypTest$p, digits = 3), ", t* = ", round(LouisaHypTest$t, digits = 3), ", df = ", round(LouisaHypTest$dof, digits = 2), ")", sep = "")} else {paste("not statistically significant (p = ", round(LouisaHypTest$p, digits = 3), ", t* = ", round(LouisaHypTest$t, digits = 3), ", df = ", round(LouisaHypTest$dof, digits = 2), ")", sep = "")} `, and the null hypothesis is `r ifelse(LouisaHypTest$p <= 0.05, paste("rejected."), paste("not rejected.")) ` The 95^th^ percentile confidence interval for the difference in mean blood glucose levels between Louisa males and females is (`r paste(round(LouisaCI$LL, digits = 2), ", ", round(LouisaCI$UL, digits = 2), sep = "")`), suggesting that the Louisa females had `r ifelse(LMales$mean - Lfemales$mean > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
 
-An unpaired two sample t-test was used to test if there was a significant difference between the blood glucose levels of Buckingham (`r paste(round(BMales$mean, digits = 2))`$\pm$ `r paste(round(BMales$sd, digits = 2))`) and females (`r paste(round(BFemales$mean, digits = 2))`$\pm$ `r paste(round(BFemales$sd, digits = 2))` ). At the critical value of $\alpha_{C} = 0.05$, the difference between Buckingham male and female blood glucose levels is `r if(BuckyHypTest$p <= 0.05) {paste("statistically significant (p = ", round(BuckyHypTest$p, digits = 3), ", t* = ", round(BuckyHypTest$t, digits = 3), ", df = ", round(BuckyHypTest$dof, digits = 2), ")", sep = "")} else {paste("not statistically significant (p = ", round(BuckyHypTest$p, digits = 3), ", t* = ", round(BuckyHypTest$t, digits = 3), ", df = ", round(BuckyHypTest$dof, digits = 2), ")", sep = "")} `, and the null hypothesis is `r ifelse(BuckyHypTest$p <= 0.05, paste("rejected."), paste("not rejected.")) ` The 95^th^ percentile confidence interval for the difference in mean blood glucose levels between Buckingham males and females is (`r paste(round(BuckyCI$LL, digits = 2), ", ", round(BuckyCI$UL, digits = 2), sep = "")`), suggesting that the Buckingham females had `r ifelse(LMales$mean - LFemales$mean > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
+An unpaired two sample t-test was used to test if there was a significant difference between the blood glucose levels of Buckingham (`r paste(round(BMales$mean, digits = 2))`$\pm$ `r paste(round(BMales$sd, digits = 2))`) and females (`r paste(round(Bfemales$mean, digits = 2))`$\pm$ `r paste(round(Bfemales$sd, digits = 2))` ). At the critical value of $\alpha_{C} = 0.05$, the difference between Buckingham male and female blood glucose levels is `r if(BuckyHypTest$p <= 0.05) {paste("statistically significant (p = ", round(BuckyHypTest$p, digits = 3), ", t* = ", round(BuckyHypTest$t, digits = 3), ", df = ", round(BuckyHypTest$dof, digits = 2), ")", sep = "")} else {paste("not statistically significant (p = ", round(BuckyHypTest$p, digits = 3), ", t* = ", round(BuckyHypTest$t, digits = 3), ", df = ", round(BuckyHypTest$dof, digits = 2), ")", sep = "")} `, and the null hypothesis is `r ifelse(BuckyHypTest$p <= 0.05, paste("rejected."), paste("not rejected.")) ` The 95^th^ percentile confidence interval for the difference in mean blood glucose levels between Buckingham males and females is (`r paste(round(BuckyCI$LL, digits = 2), ", ", round(BuckyCI$UL, digits = 2), sep = "")`), suggesting that the Buckingham females had `r ifelse(BMales$mean - Bfemales$mean > 0, paste("significantly lower"), paste("significantly higher")) ` blood glucose levels then their male counterparts. 
