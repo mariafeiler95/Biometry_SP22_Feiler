@@ -6,7 +6,37 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Make sure to keep the default for normal processing.
+default_output_hook <- knitr::knit_hooks$get("output")
+
+# Output hooks handle normal R console output.
+knitr::knit_hooks$set( output = function(x, options) {
+
+  comment <- knitr::opts_current$get("comment")
+  if( is.na(comment) ) comment <- ""
+  can_null <- grepl( paste0( comment, "\\s*\\[\\d?\\]" ),
+                     x, perl = TRUE)
+  do_null <- isTRUE( knitr::opts_current$get("null_prefix") )
+  if( can_null && do_null ) {
+    # By default R print output aligns at the right brace.
+    align_index <- regexpr( "\\]", x )[1] - 1
+    # Two cases: start or newline
+    re <- paste0( "^.{", align_index, "}\\]")
+    rep <- comment
+    x <- gsub( re, rep,  x )
+    re <- paste0( "\\\n.{", align_index, "}\\]")
+    rep <- paste0( "\n", comment )
+    x <- gsub( re, rep,  x )
+  }
+
+  default_output_hook( x, options )
+
+})
+
+knitr::opts_template$set("kill_prefix"=list(comment=NA, null_prefix=TRUE))
+
+knitr::opts_chunk$set(opts.label="kill_prefix")
+
 library(knitr)
 library(readr)
 library(dplyr)
@@ -26,7 +56,7 @@ library(data.table)
 
 - I came to Heather's office hours: **Yes**
 
-- I came to Jose's office hours: **Yes**
+- I came to Jose's office hours: **No**
 
 - I met with Heather or Jose separately from office hours: **No**
 
@@ -127,7 +157,8 @@ penguinHypTest$dof <- top/(bottom1 + bottom2)
 
 # Find the p value
 penguinHypTest$p <- 2*pt(penguinHypTest$t, 
-                         penguinHypTest$dof
+                         penguinHypTest$dof,
+                         lower.tail = FALSE
                          )
 
 # Calculate the 95% confidence interval 
@@ -169,7 +200,7 @@ diabetes <- read_csv(link,
 diabetes <- rename(diabetes, sex = gender)
 ```
 
-```{r diabetes table, echo = FALSE, comment = NA, cache = TRUE}
+```{r diabetes table, echo = FALSE, cache = TRUE}
 kable(as.data.frame(diabetes[sample(seq(1, length(diabetes$sex)), 10, replace = FALSE),2:4]),
       caption = "A selection of data from Willems et al. 1997.",
       row.names = FALSE,
@@ -324,12 +355,12 @@ rm(top, bottom1, bottom2, temp, temp2)
 #### Question 2
 *Compare your results with the R function “t.test”. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
 
-```{r p2q2, comment = NA}
+```{r p2q2}
 diabetesttest <- t.test(diabetes$stab.glu[diabetes$sex == "male"],
                         diabetes$stab.glu[diabetes$sex == "female"]
                         )
 ```
-```{r p2q2 ttest, echo = FALSE, comment = NA}
+```{r p2q2 ttest, echo = FALSE}
 diabetesttest$data.name <- "Males and Females"
 names(diabetesttest$estimate) <- c("Mean Male Glucose", "Mean Female Glucose")
 
@@ -396,7 +427,7 @@ water <- read_csv(link,
                   )
 ```
 
-```{r water table, echo = FALSE, comment = NA, cache = TRUE}
+```{r water table, echo = FALSE, cache = TRUE}
 kable(as.data.frame(water[sample(seq(1, length(water$Field1)), 5, replace = FALSE),]),
       caption = "A selection of soil water content data (% water by volume).",
       row.names = FALSE,
@@ -476,7 +507,7 @@ ggplot(melt(as.data.table(water), measure.vars = c(1,2)),
 #### Question 1
 *What is the equation for and numerical value of the test statistic for testing this null hypothesis?*
 
-```{r p3q1, comment = NA}
+```{r p3q1}
 field1 <- list("n" = length(na.omit(water$Field1)),
                "var" = var(water$Field1, na.rm = TRUE)
                )
@@ -523,7 +554,7 @@ p_value <- 1-pf(Fs,
 p_value <- 2*p_value
 ```
 
-The p_value for the difference in sample variances between the two samples is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
+The p_value for the difference in sample variances between the two samples is `r round(p_value, digits = 5)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
 
 #### Question 3
 *What is the p-value if we are interesting only in $H_A: \sigma_{Field1}^2>\sigma_{Field2}^2$?*
@@ -540,11 +571,11 @@ p_value <- pf(Fs,
               )
 ```
 
-The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
+The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r as.character(round(p_value, digits = 6))`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
 
 #### Question 4
 *What is the p-value if we are interesting only in $H_A: \sigma_{Field1}^2<\sigma_{Field2}^2$?
-```{r p3q3}
+```{r p3q4}
 # Calculate test statistic F*
 Fs <- field2$var/field1$var
 
@@ -557,7 +588,32 @@ p_value <- pf(Fs,
 
 The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r round(p_value, digits = 3)`, and we `r ifelse(p_value < 0.05, "reject the null hypothesis.", "fail to reject the null hypothesis.")`
 
+#### Question 5
+*Confirm that you can reproduce the answers for 2-4 above using the R function ‘var.test’.*
+```{r p3q5}
+vartestresults <- list("TwoTailed" = var.test(water$Field1, 
+                                              water$Field2, 
+                                              alternative = "two.sided"),
+                       "Field1Greater" = var.test(water$Field1, 
+                                                  water$Field2, 
+                                                  alternative = "less"),
+                       "Field2Greater" = var.test(water$Field1, 
+                                                  water$Field2, 
+                                                  alternative = "greater")
+                       )
+```
+```{r p3q5 table, echo = FALSE}
+temp <- c(round(vartestresults$TwoTailed$p.value, digits = 5),
+          round(vartestresults$Field1Greater$p.value, digits = 6),
+          round(vartestresults$Field2Greater$p.value, digits = 3)
+          )
 
+kable(rbind(temp),
+      caption = "var.test() results for Part 3 Questions 2-4.",
+      col.names = c("Two-Tailed", "Field 1 Greater", "Field 2 Greater"),
+      row.names = FALSE
+      )
+```
 
 \newpage
 ## Extra Work
