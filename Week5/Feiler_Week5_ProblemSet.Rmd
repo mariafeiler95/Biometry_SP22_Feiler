@@ -78,7 +78,7 @@ library(data.table)
 ## Problem Set
 
 ### Part I
-*One concern about applying metal tags to penguins is that doing so may increase drag in the water. In a study of the impact of foraging tags on penguin foraging efficiency, the mean length of 344 foraging trips for penguins with a metal tag was 12.70 days with a standard deviation of 3.71 days. For those with an electronic tag (which presumably would not increase drag), the mean foraging trip length was 11.60 days with standard deviation of 4.53 days over 512 trips. Calculate the confidence interval for the difference in foraging trip length and calculate the p-value for the null hypothesis that there is no difference between tag types. (Do not use the R function ‘t.test’. I’m asking you to calculate these yourself.) Do these data provide evidence that mean foraging trips are longer for penguins with a metal tag?*
+*One concern about applying metal tags to penguins is that doing so may increase drag in the water. In a study of the impact of foraging tags on penguin foraging efficiency, the mean length of 344 foraging trips for penguins with a metal tag was 12.70 days with a standard deviation of 3.71 days. For those with an electronic tag (which presumably would not increase drag), the mean foraging trip length was 11.60 days with standard deviation of 4.53 days over 512 trips. Calculate the confidence interval for the difference in foraging trip length and calculate the p-value for the null hypothesis that there is no difference between tag types. (Do not use the R function t.test. I'm asking you to calculate these yourself.) Do these data provide evidence that mean foraging trips are longer for penguins with a metal tag?*
 
 An unpaired two sample t-test will be used to determine if there is a difference in foraging lengths of penguins with different tag lengths.
 $$
@@ -187,7 +187,7 @@ The 95% confidence interval of the difference of mean foraging length between ta
 \newpage
 
 ### Part II
-*Download the dataset “diabetes.csv”. This dataset describes a diabetes study by Willems et al. 1997 in which blood glucose (stab.glu) was recorded for males and females (gender) in each of two locations (location).*
+*Download the dataset diabetes.csv. This dataset describes a diabetes study by Willems et al. 1997 in which blood glucose (stab.glu) was recorded for males and females (gender) in each of two locations (location).*
 
 ```{r diabetes, cache = TRUE}
 link <- "https://raw.githubusercontent.com/hlynch/Biometry2022/master/_data/diabetes.csv"
@@ -353,7 +353,7 @@ rm(top, bottom1, bottom2, temp, temp2)
 ```
 
 #### Question 2
-*Compare your results with the R function “t.test”. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
+*Compare your results with the R function t.test. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
 
 ```{r p2q2}
 diabetesttest <- t.test(diabetes$stab.glu[diabetes$sex == "male"],
@@ -414,7 +414,7 @@ In the case of this data, it would depend on what question I was asking. For som
 \newpage
 
 ### Part III
-*Download the dataset “WaterSamples.csv”, which represent soil water content (% water by volume) for independent random samples of soil from two experimental fields growing bell peppers. (Reference: Journal of Agricultural, Biological, and Environmental Statistics, Vol. 2, No. 2, p 149-155)*
+*Download the dataset WaterSamples.csv, which represent soil water content (% water by volume) for independent random samples of soil from two experimental fields growing bell peppers. (Reference: Journal of Agricultural, Biological, and Environmental Statistics, Vol. 2, No. 2, p 149-155)*
 
 *Here we are interested in the variance within each field, with the null hypothesis: $H_0: \sigma_{Field1}^2=\sigma_{Field2}^2$*
 
@@ -587,7 +587,7 @@ p_value <- 1 - pf(Fs,
 The p_value if the variance of Field 1 is greater than the variance of Field 2 is `r as.character(round(p_value, digits = 6))`. Therefore, the variance of Field 2 is `r ifelse(p_value < 0.05, "greater than Field 1.", "not greater than Field 1.")`
 
 #### Question 5
-*Confirm that you can reproduce the answers for 2-4 above using the R function ‘var.test’.*
+*Confirm that you can reproduce the answers for 2-4 above using the R function var.test.*
 ```{r p3q5}
 vartestresults <- list("TwoTailed" = var.test(water$Field1, 
                                               water$Field2, 
@@ -787,7 +787,7 @@ rm(top, bottom1, bottom2, temp, temp2)
 ```
 
 #### Question 2
-*Compare your results with the R function “t.test”. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
+*Compare your results with the R function t.test. (Copy and paste results below.) Explain what every single number reported in the output of t.test means.*
 
 ```{r p2q2 extra}
 ttestLouisa <- t.test(Louisa$stab.glu[Louisa$sex == "male"], 
