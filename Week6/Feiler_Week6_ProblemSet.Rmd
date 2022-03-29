@@ -191,14 +191,59 @@ Therefore, the sum of the probabilities of all cells that contain $\bigstar$ is 
 #### F 
 *What is the sum of the probabilities of all the cells that contain either a $\maltese$ or a $\bigstar$? (Note: This is the Type I error rate for the two-stage design, because these are all the ways you would decide to reject the null even when it is true.) Explain how you got your answer!*
 
+See code notes for explanation.
 
+```{r f}
+# Get the probabilities of every potential outcome of the table
+# Produces a 15 by 30 matrix with probabilities of the results of the first 30 trials
+# followed by the next 15 trials. Probabilities correspond with the table of daggers
+# and stars provided
+probs <- matrix(data = outer(dbinom(0:15, 15, 0.5), # Prob of j heads in 15 trials
+                             dbinom(0:30, 30, 0.5)  # Prob of i heads in 30 trials
+                             ),
+                nrow = 16,                          # Since 0 is not a valid matrix 
+                ncol = 31,                          # dimension call
+                dimnames = list(seq(0, 15),         # Names for my sanity
+                                seq(0, 30)
+                                )
+                )
+
+# Create vector to catch the relevant p-values
+probDashes <- c()
+
+# Produce a vector of the probabilities corresponding with any experimental iteration 
+# that produced an insignificant number of heads in 45 trials
+ 
+for (i in 10:20){           # For the insignificant # of heads in the first 30 trials
+        for (j in 0:15){    # For the # of heads in the following 15 trials
+                # Determines if the number of heads is significant for 45 trials
+                # aka between and including 16 to 29
+                if (16 <= (i + j) & (i + j) <= 29){
+                        # Collect the probabilities of interest 
+                        probDashes <- append(probDashes, 
+                                             probs[j+1, i+1] 
+                                             )
+                        # +1 to the prob dimension calls since a matrix cannot have a 
+                        # 0th dimension, 0 heads in is column 1 or row 1
+                }
+        } 
+}
+
+# The complement of the sum of the probabilities of an insignificant number of heads is 
+# the sum of the probabilities of all the cells that contain either a dagger or a star
+probStarDagger <- 1 - sum(probDashes)
+```
+
+The sum of the probabilities of all the cells that contain either a $\maltese$ or a $\bigstar$ is `r round(probStarDagger, digits = 3) `.
 
 #### G 
-*Suppose that the researcher intends to run an experiment using this two-stage stopping criterion. She collects the first 30 flips and finds 8 heads. She therefore rejects the null hypothesis and reports that p<0.05. Is that correct? Explain.*
+*Suppose that the researcher intends to run an experiment using this two-stage stopping criterion. She collects the first 30 flips and finds 8 heads. She therefore rejects the null hypothesis and reports that p < 0.05. Is that correct? Explain.*
 
-
+Since the increased Type I Error rate of a two stage experiment is `r round(probStarDagger, digits = 3) `, as calculated in Part F, then she cannot claim that p < 0.05. Her new Type I Error rate is what defines her critical value, $\alpha_c$, which means p < `r round(probStarDagger, digits = 3) ` at the least.
 
 #### H
 *Whenever we run an experiment and get a result that trends away from the null experiment, but isn't quite significant, it's natural to consider collecting more data. We saw in the previous part that even intending to collect more data, but not actually doing it, inflates the Type I error rate. Doesn't the fact that we always consider collecting more data mean that we always have a much higher Type I error rate than we pretend we do? Doesn't the actual Type I error rate of an experiment depend on the maximal number of data points we'd be willing to collect over the course of our lifetimes? In 1-2 paragraphs, discuss this conundrum and decide whether or not you think this poses a fundamental problem with null hypothesis testing.* 
 
+When collecting extra data after the experiment is planned, the experimenter inflates the Type I Error rate. The issue we then face is the inflation of Type I Error after every single follow up study or reassessment of the experiment. However, the desire to increase sample size, which in theory increases the power of our statistical analyses then compete with our desire to keep the Type I Error rate at our predetermined critical value, $\alpha_c$. This definitely highlights an issue with null hypothesis testing that is rarely acknowledged by the academic community at large and results in the distribution of non-reproducible experiments as shown in the podcast in Part I. Most researchers, if they haven't considered this factor of their results, need to contend with the fact that they have definitely rejected null hypotheses that were true. 
 
+However, I would argue that in the event that you are designing an experiment, null hypothesis testing is not a completely undesirable option. As we've discussed in class, though Bayesian statistical methods would mitigate inflating Type I Error rates due to multiple comparisons, they are computationally more difficult to perform and to understand. In order to mitigate the effects of multiple end points or intermittent analyses, one should set $\alpha_c$ ahead of time. Then, in the event that the null is not rejected, a power analysis can be performed to determine if the experiment bears repeating. This is of course assuming that you did not calculate the sample size you need for a sufficient statistical power ahead of time or if there are no other constraints on sample size (time, money, etc.). This methodology would use the "Gold Standard" of $\alpha_c = 0.05$ correctly. Clearly this does not account for other ways that multiple comparisons can sneak into your experimental design, but it does directly counter on of the most common and understandable mistakes made by scientists.  
