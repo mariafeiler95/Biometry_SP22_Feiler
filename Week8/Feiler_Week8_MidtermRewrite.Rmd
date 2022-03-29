@@ -1,0 +1,84 @@
+---
+title: "BEE552 Biometry Midterm Rewrite" 
+author: "Maria Feiler"
+date: "03/29/2022"
+output: 
+    pdf_document:
+        fig_caption: FALSE
+---
+
+```{r setup, include=FALSE}
+# Make sure to keep the default for normal processing.
+default_output_hook <- knitr::knit_hooks$get("output")
+
+# Output hooks handle normal R console output.
+knitr::knit_hooks$set( output = function(x, options) {
+
+  comment <- knitr::opts_current$get("comment")
+  if( is.na(comment) ) comment <- ""
+  can_null <- grepl( paste0( comment, "\\s*\\[\\d?\\]" ),
+                     x, perl = TRUE)
+  do_null <- isTRUE( knitr::opts_current$get("null_prefix") )
+  if( can_null && do_null ) {
+    # By default R print output aligns at the right brace.
+    align_index <- regexpr( "\\]", x )[1] - 1
+    # Two cases: start or newline
+    re <- paste0( "^.{", align_index, "}\\]")
+    rep <- comment
+    x <- gsub( re, rep,  x )
+    re <- paste0( "\\\n.{", align_index, "}\\]")
+    rep <- paste0( "\n", comment )
+    x <- gsub( re, rep,  x )
+  }
+
+  default_output_hook( x, options )
+})
+
+knitr::opts_template$set("kill_prefix"=list(comment=NA, null_prefix=TRUE))
+
+knitr::opts_chunk$set(opts.label="kill_prefix")
+
+library(tidyverse)
+library(knitr)
+```
+
+
+## My Learning Journey
+
+*Over the last week, I participated in Biometry in the following ways:*
+
+- I asked / answered **4** questions posed in class.
+
+- I asked **0** questions in Slack.
+
+- I answered **0** questions posed by other students on Slack.
+
+- I came to Heather's office hours: **No**
+
+- I came to Jose's office hours: **No**
+
+- I met with Heather or Jose separately from office hours: **No**
+
+*Anything not falling into one of the above categories?*
+
+> **No**
+
+*On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate my comfort with R programming after this week?* 
+
+> **7**
+
+*Any topics from last week that you are still confused about?*
+
+> **Will message in Slack**  
+
+\newpage
+\newgeometry{margin=0cm}
+\pagenumbering{gobble}
+
+```{r page 1, echo = FALSE, out.width = "100%"}
+figs <- paste("./midtermfigs/", 
+              list.files("./midtermfigs",
+                         pattern = ".png"), 
+              sep = "")
+include_graphics(figs)
+```
