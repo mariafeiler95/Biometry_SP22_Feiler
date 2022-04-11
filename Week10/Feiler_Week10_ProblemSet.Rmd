@@ -1,0 +1,260 @@
+---
+title: "BEE552 Biometry Week 10"
+author: "Maria Feiler"
+date: "04/06/2022"
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+# Make sure to keep the default for normal processing.
+default_output_hook <- knitr::knit_hooks$get("output")
+
+# Output hooks handle normal R console output.
+knitr::knit_hooks$set( output = function(x, options) {
+
+  comment <- knitr::opts_current$get("comment")
+  if( is.na(comment) ) comment <- ""
+  can_null <- grepl( paste0( comment, "\\s*\\[\\d?\\]" ),
+                     x, perl = TRUE)
+  do_null <- isTRUE( knitr::opts_current$get("null_prefix") )
+  if( can_null && do_null ) {
+    # By default R print output aligns at the right brace.
+    align_index <- regexpr( "\\]", x )[1] - 1
+    # Two cases: start or newline
+    re <- paste0( "^.{", align_index, "}\\]")
+    rep <- comment
+    x <- gsub( re, rep,  x )
+    re <- paste0( "\\\n.{", align_index, "}\\]")
+    rep <- paste0( "\n", comment )
+    x <- gsub( re, rep,  x )
+  }
+
+  default_output_hook( x, options )
+
+})
+
+knitr::opts_template$set("kill_prefix"=list(comment=NA, null_prefix=TRUE))
+
+knitr::opts_chunk$set(opts.label="kill_prefix")
+
+library(knitr)
+library(ggplot2)
+library(boot)
+library(minpack.lm)
+```
+
+## My Learning Journey
+
+*Over the last week, I participated in Biometry in the following ways:*
+
+- I asked / answered **iii** questions posed in class.
+
+- I asked **0** questions in Slack.
+
+- I answered **0** questions posed by other students on Slack.
+
+- I came to Heather's office hours: **No**
+
+- I came to Jose's office hours: **No**
+
+- I met with Heather or Jose separately from office hours: **No**
+
+*Anything not falling into one of the above categories?*  
+
+> **No**
+
+*On a scale of 1 (no knowledge) to 10 (complete expert), how would I rate my comfort with R programming after this week?* 
+
+> **7**
+
+*Any topics from last week that you are still confused about?*
+
+
+\newpage
+
+## Problem Set
+
+### Part I
+
+*Fill out the following table.*
+#### table
+
++-------------------------------------------+------------+--------------------------------------------------------------------+-------------------------------------------+-------------------------------------------------------------------+
+| Test                                      | $H_0$      | Test Statistic T                                                   | $f(T\mid H_0)$                            | Assumptions                                                       |
++===========================================+============+====================================================================+===========================================+===================================================================+
+| Pearson's product moment correlation      | $\rho = 0$ | $T^* = r\sqrt{\frac{n-2}{1-r^2}}$                                  | $t_{n-2}$                                 | $\bullet$ Joint probability (A,B) is bivariate normal\            |
+|                                           |            |                                                                    |                                           | $\bullet$ Relationship between A and B is linear\                 |
+|                                           |            |                                                                    |                                           | $\bullet$ Data are independent samples from a joint distribution  |
++-------------------------------------------+------------+--------------------------------------------------------------------+-------------------------------------------+-------------------------------------------------------------------+
+| Spearman's rank correlation               | $\rho = 0$ | $r_s = \frac{Cov(ranks_A,ranks_B)}{\sqrt{Var(ranks_A)Var(ranks)}}$ | $\sqrt\frac{1}{n-1}N(0,1)$                | $\bullet$ Data are independent samples from a joint distribution  |
++-------------------------------------------+------------+--------------------------------------------------------------------+-------------------------------------------+-------------------------------------------------------------------+
+| Kendall's coefficient of rank correlation | $\tau = 0$ | $\tau = \frac{concordant\;pairs - discordant\;pairs}{0.5n(n-1)}$   | $N\left(0,\frac{2(2n+5)}{9n(n-1)}\right)$ | $\bullet$ Data are continuous and ordinal\                        |
+|                                           |            |                                                                    |                                           | $\bullet$ Data are monotonic                                      |
++-------------------------------------------+------------+--------------------------------------------------------------------+-------------------------------------------+-------------------------------------------------------------------+
+
+where $Var(A) = \frac{1}{n-1}\sum^n_{i=1}(A_i-\bar{A})(A_i-\bar{A})$ and $Cov(A,B) = \frac{1}{n-1}\sum^n_{i=1}(A_i-\bar{A})(B_i-\bar{B})$
+
+### Part II
+
+*Load the dataset “NYData.csv”. These data represent number of new confirmed coronavirus cases in the first days after March 1, 2020 in the state of New York. (March 1st is Day=0.) There are 19.54 million residents in the state of New York.*
+
+```{r data}
+nyData <- readxl::read_xls("NYData updated 2022.xls", sheet = 1)
+
+# Add cumulative sum column
+nyData$CaseCumSum <- cumsum(nyData$NewCases)
+
+# Add a column for those not infected
+nyData$Uninfected <- 19540000-nyData$CaseCumSum
+
+# Remove February 29 data ("Day 0") and reset March 1 to Day 0
+nyData <- nyData[-1,]
+nyData$Day <- nyData$Day-1
+
+head(nyData)
+```
+
+*a. Plot the number of cumulative cases as a function of Day.*
+
+```{r 2a, echo = FALSE}
+plot(CaseCumSum ~ Day, 
+     data = nyData,
+     main = "Cumulative COVID-19 Cases Since March 1, 2022 in New York State",
+     ylab = "Cumulative COVID-19 Cases",
+     xlab = "Days Since March 1, 2022",
+     pch = 16)
+```
+
+*b. Fit the cumulative coronavirus data Y using logistic regression, and plot the best fit line on the original data. Using R’s function ‘predict.glm’, plot the 95th percentile confidence intervals as well (we can assume the errors are normally distributed and use ±1.96 s.e.). Note that a logistic regression is used when the underlying data follow a Binomial process. Think carefully about how to set up your logistic regression so it reflects the Binomial nature of the data you have.*
+
+```{r 2b, comment = NA}
+# Get logistic regression 
+fit1 <- glm(cbind(nyData$CaseCumSum, nyData$Uninfected) ~ nyData$Day,
+              family = "binomial")
+
+summary(fit1)
+
+# Create dataframe of days since March 1 (0 to 32)
+newData <- data.frame(Day = seq(0,32))
+
+# Calculate confidence interval bands
+nyCIBands <- predict.glm(fit1,
+                         newData,
+                         se.fit = TRUE)
+```
+
+*c. We will now fit an alternative model to these data, one that is often used for processes like epidemic spread. Fit the Gompertz curve $Y \sim N(ab^{be^{cx}}, \sigma^2)$, which is equivalent to $Y_i=ae^{be^{cx}}+\epsilon_i, \epsilon_i \sim N(0,\sigma^2)$, to the coronavirus data. You might start trying R’s simple function ‘nls’ but you might find that it is hard to find starting values that are close enough for ‘nls’ to actually converge on estimates. One trick is to take the log of the above equation (log both the left and right hand sides) and then try fitting that logged equation. This logged version is very similar (but not exactly the same) to the original question, and the estimates for this logged version will be good starting values. (Taking the log of both sides yields an equation which is numerically easier for ‘nls’ to handle.) If this doesn’t work for you, you might also try the ‘nlsLM’ function in the ‘minpack.lm’ package. More details here: http://www.r-bloggers.com/a-better-nls/.*
+
+```{r 2c}
+# Initial values were taken from the glm() results from before (chose these values 
+# after working with Emily and Sydney) 
+
+# The total number of cases 33 days after March 1
+aStart <- nyData$CaseCumSum[33]
+
+# The median of the deviance residuals
+bStart <- -34.81
+
+# The intercept
+cStart <- -fit1$coefficients[[2]]
+
+# Get Gompertz curve
+fit2 <- nls(CaseCumSum ~ a*exp(b*exp(c*Day)), 
+            data = nyData,
+            start = list(a = aStart, 
+                         b = bStart, 
+                         c = cStart)
+           )
+```
+
+*Write a script to construct the 95th percentile confidence intervals using the following bootstrap technique (this is a bit of a hack, but one is often left with no choice but to get creative...):*
+
+1. *sample with replacement from the residuals of the original ‘nls’ fit*
+
+2. *construct a new bootstrap dataset using $Y_i^*=\hat{Y}_i+\epsilon_i^*$" (Note that $\epsilon_i^*$ is a legitimate residual from the original fit, its just been moved to a new data point.)*
+
+3. *refit the model as above*
+
+4. *use nls() to obtain estimates for the model parameters (k is an index for which bootstrap sample you are on) ($a_k^*,b_k^*,c_k^*$) using the data created by the bootstrapping procedure*
+
+5. *save the model predictions for each x (i.e. $a_k^*e^{b_k^*e^(c_k^*x}$*
+
+6. *repeat steps 1-5 1000 times (this will generate 1000 bootstrap replications) *
+
+7. *for each value of x (i.e. Day), define the 95th percentile CI for $ae^{be^{cx}}$ (at that x) as the (2.5th, 97.5th) percentiles of the bootstrapped $ae^{be^{cx}}$ (at that x)*
+
+*(Notice that your CI for $ae^{be^{cx}} will no longer be a smooth function! Also, you might find that inside your bootstrap loop, you are getting errors and this is causing the loop to abort with an error. This is happening because there will be times when, by random chance, the bootstrapped datasets will be hard to fit, and nls() will fail to converge. To avoid having an error on one iteration cause the whole loop to abort with an error, wrap the entire line of code with nls in the try() function. This will prevent an error from causing the loop to abort with an error. For more details, look at the help file ?try.)*
+
+```{r 2d}
+# # Define number of iterations
+# nit <- 1000
+# 
+# # Define the matrices into which residual bootstrap samples 
+# # will be stored, and the matrix into which the nls() results will be 
+# # stored
+# 
+# boot <- matrix(data = NA, 
+#                nrow = nit, 
+#                ncol = length(fit1$residuals),
+#                dimnames = list(c(1:nit),
+#                                c(1:length(fit1$residuals))))
+# 
+# est <- matrix(data = NA,
+#               nrow = nit,
+#               ncol = 3,
+#               dimnames = list(c(1:nit),
+#                               c("a^star", "b^star", "c^star")))
+# 
+# for (i in 1:nit) {
+#         boot[i,] <- sample(x = fit1$residuals,
+#                           size = length(fit1$residuals),
+#                           replace = TRUE
+#                           )
+#         
+#         fitk <- nls(CaseCumSum ~ a*exp(b*exp(c*Day)), 
+#                     data = nyData,
+#                     start = list(a = aStart, 
+#                                  b = bStart, 
+#                                  c = cStart)
+#                  )
+#         est[i,1]
+#         
+#         }
+
+```
+
+```{r 2d plot, echo = FALSE, fig.height=10}
+plot(CaseCumSum ~ Day, 
+     data = nyData,
+     main = "Cumulative COVID-19 Cases Since March 1, 2022 in New York State",
+     ylab = "Cumulative COVID-19 Cases",
+     xlab = "Days Since March 1, 2022",
+     pch = 16)
+
+# Fit line
+lines(newData[,1],
+      inv.logit(nyCIBands$fit)*19540000,
+      col = "purple",
+      lwd = 2)
+
+# Get CI upper bounds
+lines(newData[,1],
+      inv.logit(nyCIBands$fit+1.96*nyCIBands$se.fit)*19540000,
+      col = "purple",
+      lwd = 2,
+      lty = 2)
+
+# Get CI lower bounds
+lines(newData[,1],
+      inv.logit(nyCIBands$fit-1.96*nyCIBands$se.fit)*19540000,
+      col = "purple",
+      lwd = 2,
+      lty = 2)
+
+# Plot Gompertz curve
+lines(newData[,1],
+      fitted(fit2),
+      col = "blue",
+      lwd = 2)
+```

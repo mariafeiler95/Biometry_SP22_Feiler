@@ -1,0 +1,286 @@
+---
+title: "BEE 552 Week 10 Lab"
+author: "Maria Feiler"
+date: '2022-04-07'
+output: pdf_document
+---
+
+# Challenger Analysis
+
+1. The night before the launch, there was a meeting to discuss the influence of temperature on o-ring failure. The focus was on Figure 1a showing the number of o-ring failures CONDITIONAL ON there being at least one o-ring failure.
+
+2. There are 6 o-rings on each shuttle, what is the appropriate model for o-ring failure? $X \sim Binom(n=6, p(t,s))$ where p(t,s) is the probability of o-ring failure as a function of temperature t and pressure s.
+
+3. Therefore, the appropriate GLM for o-ring failure is $log\left(\frac{p(t,s)}{1-p(t,s)}\right)=\alpha+\beta t + \gamma s$
+
+4. They then fit the model using maximum likelihood. 
+
+5. They calculate the “goodness of fit” statistic $G^2$. This is just another name for the Deviance.
+
+$$
+\begin{aligned}
+G^{2} &= 2*log\left(\frac{\mbox{Likelihood saturated model}}{\mbox{Likelihood model being considered}}\right) \\
+\mbox{Deviance} &= -2*(\mbox{LL(model being considered)}-\mbox{LL(saturated model)}) \\
+\mbox{Deviance} &= 2*(\mbox{LL(saturated model)}-\mbox{LL(model being considered)}) \\
+\mbox{Deviance} &= 2*log\left(\frac{\mbox{Likelihood saturated model}}{\mbox{Likelihood model being considered}}\right) = G^{2}
+\end{aligned}
+$$
+
+6. Recognizing that devaince is only really meaningful relative to another model, they fit the temperature-only model $log\left(\frac{p(t)}{1-p(t)}\right) = \alpha + \beta t$. The difference in deviances is given by $\mbox{Deviance difference} \sim \chi^{2}_{\mbox{additional parameters}}$. So there is now only one additional parameter, so $\mbox{Deviance difference} \sim \chi^{2}$. The difference in deviance is not significant, i.e. this model fits about as well as the more complex model, so we can say that pressure has little effect on the probability of o-ring failure and we drop it from the model.
+
+7. They construct 90th percentile confidence intervals for the expected number of incidents.
+        *Checkpoint #1: What exactly are they doing here? Do you understand what they have done and why?* 
+        They are sampling with replacement from the original data and are refitting the model each time.
+
+8. Next they plot the contours of the log-likelihood function and note that the contours are elliptical and therefore the data were not leading to ill-conditioned computation.
+
+9. They collapse the binomial data to make a Bernoulli dataset in which “0” means that no o-rings failed, and “1” means that at least one o-ring failed.
+        *Checkpoint #2: Why did they do this?* 
+        Because the o-rings may not be independent.
+
+10. They refit the data using the Bernoulli model and find that the fits are quite close.
+
+11. They want to construct confidence intervals for the model parameters. They say “instead of using the aymptotic theory to construct confidence intervals, we use the parametric bootstrap procedure.”
+        *Checkpoint #3: Why might they have used a bootstrap approach here?*
+        Small size size probably…
+        They take the best-fit model, sample with replacement from the logistic model (presumably drawing (x,predicted y) pairs at random with replacement), and refit the bootstrapped data to get new model parameter estimates.
+
+12. Then they look at the sensitivity of the model to each of the data points, by pulling out each data point in turn and refitting the model.
+        *Checkpoint #4: What is this called?*
+        Jackknife!
+
+13. They next consider a non-linear model of the form $log\left(\frac{p(t,s)}{1-p(t,s)}\right)=\alpha + \beta(t-t_{0})+\gamma(t-t_{0})^{2}$
+
+14. They again consider the change in deviance in going from the simpler linear model to the more complex quadratic model, and they find the quadratic term is not significant.
+
+15. They then consider a model in which they use a non-parametric smoothing fit (using a moving window appraoch) in Figure 8.
+
+16. They identify possible outliers in the data (more on model criticism in three weeks).
+
+```{r load data}
+challenger <- read.csv("https://raw.githubusercontent.com/hlynch/Biometry2022/master/_data/Challenger_data.csv")
+
+attach(challenger)
+
+challenger.fit1 <- lm(O.ring.failure ~ Temp)
+summary(challenger.fit1)
+
+plot(Temp,
+     O.ring.failure,
+     xlab = "Temperature",
+     ylab = "Damage",
+     main = "O-ring damage vs. Temperature")
+lines(Temp,fitted(challenger.fit1),col="red")
+
+```
+
+This model is flawed because the predictions will escape the bounds (0,1) and the residuals are clearly not normal.
+
+```{r residual plot}
+resid1<-residuals(challenger.fit1)
+plot(Temp,
+     resid1,
+     xlab = "Temperature",
+     ylab = "Residuals for lm model")
+```
+
+# Weighted Linear Regression
+
+How can we solve this? Weighted linear regression.
+$$ \mbox{weighted SS} = \sum^{n}_{i=1} w_{i} (Y_{i}-\hat{Y}_{i})^{2} $$
+$$ \mbox{weighted SS} = \sum^{n}_{i=1} w_{i} (Y_{i}-\hat{Y}_{i})^{2} = \frac{1}{\pi_{i}(1-\pi_{i})} $$
+
+$$ \hat{w}_{i} = \frac{1}{\hat{Y}_{i}(1-\hat{Y}_{i})} $$
+
+The procedure is then as follows:
+
+1. Fit ordinary least squares
+2. Obtain estimates $\hat{Y}_i$
+3. If an estimate is less than 0 or greater than 1, set it to 0.001 (or something small) and 0.999 (or something close to but less than one), respectively
+4. Compute the weights $W_i$
+5. Fit weighted least squares
+
+```{r fit estimates}
+fitted(challenger.fit1)
+```
+
+Set $\hat{Y}_i < 0.001$ and $\hat{Y}_i = 0.999$. 
+
+```{r set y hat}
+pmin(c(1,2,3),
+     c(0,3,5))
+
+pmin(1,
+     c(0,3,5))
+
+new.predictions <- pmin(0.999,
+                        pmax(0.001, 
+                             fitted(challenger.fit1)
+                             )
+                        )
+
+vars <- new.predictions*(1-new.predictions)
+
+challenger.fit2 <- lm(O.ring.failure ~ Temp,
+                      weights = (1/vars)
+                      )
+summary(challenger.fit2)
+
+plot(Temp,
+     O.ring.failure,
+     xlab = "Temperature",
+     ylab = "Damage",
+     main = "O-ring Damage vs. Temperature")
+lines(Temp,fitted(challenger.fit1),
+      col="red")
+lines(Temp,fitted(challenger.fit2),
+      col="blue")
+```
+
+Still have the same problems as before.
+
+# Logistic Regression Practice
+
+```{r logreg}
+challenger.fit3 <- glm(O.ring.failure~Temp, 
+                       family = "binomial")
+
+plot(Temp,O.ring.failure,
+     xlab = "Temperature",
+     ylab = "Damage",
+     main = "O-ring Damage vs. Temperature") 
+
+# Above line only needed because RMarkdown doesn't keep previous plot
+lines(Temp,
+      fitted(challenger.fit1),
+      col = "red") 
+
+# Above line only needed because RMarkdown doesn't keep previous plot
+lines(Temp,
+      fitted(challenger.fit2),
+      col = "blue") 
+
+# Above line only needed because RMarkdown doesn't keep previous plot
+lines(sort(Temp), 
+      fitted(challenger.fit3)[order(Temp)],
+      col = "green",
+      lwd = 2)
+
+summary(challenger.fit3)
+
+newdata <- data.frame(Temp = seq(30,85))
+
+confidence.bands <- predict.glm(challenger.fit3,
+                                newdata,
+                                se.fit = TRUE)
+
+challenger.fit3<-glm(cbind(O.ring.failure, 6-O.ring.failure) ~ Temp, 
+                     family="binomial")
+
+library(boot)
+
+plot(Temp,
+     O.ring.failure,
+     xlab ="Temperature",
+     ylab = "Damage",
+     main = "O-ring Damage vs. Temperature") 
+# Above line only needed because RMarkdown doesn't keep previous plot
+lines(newdata[,1],
+      inv.logit(confidence.bands$fit),
+      col = "purple",
+      lwd = 2)
+lines(newdata[,1],
+      inv.logit(confidence.bands$fit+1.96*confidence.bands$se.fit),
+      col = "purple",
+      lwd = 2,
+      lty = 2)
+lines(newdata[,1],
+      inv.logit(confidence.bands$fit-1.96*confidence.bands$se.fit),
+      col = "purple",
+      lwd = 2,
+      lty = 2)
+```
+
+*Checkpoint #5: How would you construct a prediction interval for a binary value?* You cannot, it doesn’t make sense, the value is either 0 or 1.
+
+```{r deviances}
+-2*logLik(challenger.fit3)
+challenger.fit4<-glm(O.ring.failure~1,family=binomial)
+-2*logLik(challenger.fit4)
+```
+
+# Poisson Regression Practice
+
+```{r poisson}
+challenger.fit4<-glm(O.ring.failure~Temp,family="poisson")
+summary(challenger.fit4)
+
+confidence.bands<-predict.glm(challenger.fit4,newdata,se.fit=TRUE)
+plot(Temp,O.ring.failure,xlab="Temperature",ylab="Damage",main="O-ring Damage vs. Temperature") 
+# Above line only needed because RMarkdown doesn't keep previous plot
+lines(newdata[,1],exp(confidence.bands$fit),col="orange",lwd=2)
+lines(newdata[,1],exp(confidence.bands$fit+1.96*confidence.bands$se.fit),col="orange",lwd=2,lty=3)
+lines(newdata[,1],exp(confidence.bands$fit-1.96*confidence.bands$se.fit),col="orange",lwd=2,lty=3)
+```
+
+# Getting a Feel for Deviance
+
+```{r deviance 2}
+# Fit a logistic regression with Temp as the only covariate 
+challenger.smaller.model <- glm(O.ring.failure ~ Temp, data=challenger, family="binomial")
+# Generate a random covariate with same mean and sd as Temp
+randvar <- rnorm(n=length(challenger$Temp), mean=mean(challenger$Temp), sd=sd(challenger$Temp))
+# Add the random covariate to a data frame for model-fitting 
+newdata <- cbind(challenger, randvar)
+# Fit the logistic regression with Temp and the random covariate 
+challenger.larger.model <- glm(O.ring.failure ~ Temp + randvar, data=newdata, family="binomial")
+# Calculate the deviance difference of the two models 
+dev_diff <- deviance(challenger.smaller.model) - deviance(challenger.larger.model)
+dev_diff
+
+# and... repeat!
+dev_diff <- c()
+
+for (i in 1:1000){
+  # Generate a random covariate with same mean and sd as Temp
+  randvar <- rnorm(n=length(challenger$Temp), mean=mean(challenger$Temp), sd=sd(challenger$Temp))
+  
+  # Add the random covariate to a data frame for model-fitting 
+  newdata <- cbind(challenger, randvar)
+  
+  # Fit the model
+  challenger.fit.larger.model <- glm(O.ring.failure ~ Temp + randvar, data=newdata, family="binomial")
+
+  # Calculate the deviance difference 
+  dev_diff_rand <- deviance(challenger.smaller.model) - deviance(challenger.fit.larger.model)
+  
+  dev_diff <- c(dev_diff, dev_diff_rand)
+}
+
+# plot the distribution and add a line for a chi-square with df=1 
+hist(dev_diff, xlab="Deviance Difference", main="Expected distribution", freq=FALSE,breaks=30)
+lines(seq(0,20,0.1), dchisq(seq(0,20,0.1),df=1), col="red",lwd=2)
+```
+
+# Generalized Additive Models
+
+```{r gam, fig.height=9}
+library(gam)
+
+hist(airquality$Ozone)
+
+air.lm<-lm(log(Ozone)~Solar.R+Wind+Temp,data=airquality)
+summary(air.lm)
+
+air.gam<-gam(log(Ozone)~s(Solar.R)+s(Wind)+s(Temp),data=airquality)
+summary(air.gam)
+
+par(mfrow=c(3,1))
+plot(air.gam,se=T)
+
+# Change d.o.f. to 20 from default 4
+air.gam<-gam(log(Ozone)~s(Solar.R,df=20)+s(Wind)+s(Temp),data=airquality)
+plot(air.gam,se=T)
+
+```
+
