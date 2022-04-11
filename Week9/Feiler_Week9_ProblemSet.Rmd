@@ -2,7 +2,11 @@
 title: "BEE552 Biometry Week 9"
 author: "Maria Feiler"
 date: "03/29/2022"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -36,6 +40,8 @@ knitr::knit_hooks$set( output = function(x, options) {
 knitr::opts_template$set("kill_prefix"=list(comment=NA, null_prefix=TRUE))
 
 knitr::opts_chunk$set(opts.label="kill_prefix")
+
+library(knitr)
 ```
 
 ## My Learning Journey
@@ -44,7 +50,7 @@ knitr::opts_chunk$set(opts.label="kill_prefix")
 
 - I asked / answered **1** questions posed in class.
 
-- I asked **3** questions in Slack.
+- I asked **6** questions in Slack.
 
 - I answered **0** questions posed by other students on Slack.
 
@@ -64,8 +70,311 @@ knitr::opts_chunk$set(opts.label="kill_prefix")
 
 *Any topics from last week that you are still confused about?*
 
-> 
+> Honestly, this whole problem set. I was able to work through things with others, but my actual understanding of this is very poor. 
 
 \newpage
 
 ## Problem Set
+
+### Part I
+
+*For two different combinations of $\beta_0$ and $\beta_1$ (of your choosing), fill in the tables below (three columns need to be completed, plus the box for the sum of squared residuals). Try to tweak the parameter values to minimize the sum of squared residuals. This exercise is designed to just re-enforce the mechanics of fitting linear models, that each set of parameter values yields a set of predicted Y values, and that the difference between these predictions and the actual data form the basis of calculating the sum of squared errors.*
+
+$$\beta_0 = 2$$
+$$\beta_1 = 3$$
+
+```{r beta 1}
+# Store observed x and y variables 
+x <- c(1, 2, 3, 4, 5, 6)
+y <- c(0, 1, 7, 2, 4, 10)
+
+# Store beta variables
+beta0 <- 2
+beta1 <- 3
+
+# Calculate yhat for each x
+yhat <- c()
+for (i in 1:length(x)){
+        yhat[i] <- 1*(beta0+x[i])*beta1
+}
+
+# Calculate epsilon for each x
+ep <- c()
+for(i in 1:length(x)){
+        ep[i] <- yhat[i]-y[i]
+}
+
+# Get epsilon squared
+ep2 <- ep^2
+```
+
+```{r beta 1 table, echo = FALSE, comment = NA}
+kable(cbind(c(rep(1, 6)),
+            x,
+            yhat,
+            y,
+            ep,
+            ep2),
+      row.names = FALSE,
+      col.names = c("Model matrix",
+                    "$x_i$",
+                    "$\\hat{y}$",
+                    "$y_i$",
+                    "$\\epsilon_i$",
+                    "$\\epsilon_i^2$")
+      )
+```
+
+\begin{center}
+The sum of $\epsilon^2$ is `r sum(ep2)`.
+\end{center}
+
+\newpage
+
+$$\beta_0 = 1$$
+$$\beta_1 = 1$$
+
+```{r beta 2}
+# Store beta variables
+beta0 <- 1
+beta1 <- 1
+
+# Calculate yhat for each x
+yhat <- c()
+for (i in 1:length(x)){
+        yhat[i] <- 1*(beta0+x[i])*beta1
+}
+
+# Calculate epsilon for each x
+ep <- c()
+for(i in 1:length(x)){
+        ep[i] <- yhat[i]-y[i]
+}
+
+# Get epsilon squared
+ep2 <- ep^2
+```
+
+```{r beta 2 table, echo = FALSE, comment = NA}
+kable(cbind(c(rep(1, 6)),
+            x,
+            yhat,
+            y,
+            ep,
+            ep2),
+      row.names = FALSE,
+      col.names = c("Model matrix",
+                    "$x_i$",
+                    "$\\hat{y}$",
+                    "$y_i$",
+                    "$\\epsilon_i$",
+                    "$\\epsilon_i^2$")
+      )
+```
+
+\begin{center}
+The sum of $\epsilon^2$ is `r sum(ep2)`.
+\end{center}
+
+\newpage
+
+### Part II
+*For Part II and III of the problem set, we will analyze a dataset collected by Lucy Donahue and undergraduate Nancy Dong relating to the characteristics of Antarctic passenger vessels over time. This dataset includes several columns you will not need, but we will focus on the columns for vessel length, maximum speed, and engine power.*
+
+```{r data}
+vessels <- read.csv("Vessel_data.csv", header = TRUE)
+```
+
+#### Step 1
+*a) Use the ‘lm’ function to fit the following linear regression model, where MaxSpeed is the response and Length is the covariate: $MaxSpeed \sim Length$. What is the statistical distribution being modeled here?*
+
+```{r 1.1.a, comment = NA}
+fit1 <- lm(vessels$max_speed_knots ~ vessels$length_meters)
+
+fit1$coefficients
+```
+
+$$MaxSpeed \sim N(8.33+0.063x_i+\epsilon_i,\sigma^2)$$
+
+*Are there any data points that may be considered outliers? If so, which one(s)? How does the regression slope change if it/they were to be removed from the dataset?*
+
+```{r maxspeed vessels plot, echo = FALSE, fig.height = 4}
+plot(vessels$max_speed_knots ~ vessels$length_meters, 
+     main = "Vessel Length and Maximum Speed", 
+     xlab = "Vessel Length (m)",
+     ylab = "Maximum Speed (knots)")
+
+out1 <- which(vessels$length_meters > 70 & vessels$length_meters < 100 & vessels$max_speed_knots > 20)
+
+out2 <- which(vessels$length_meters > 300 & vessels$max_speed_knots > 20)
+
+out3 <- which(vessels$length_meters > 275 & vessels$length_meters < 300 & vessels$max_speed_knots > 20 & vessels$max_speed_knots < 25)
+
+points(x = vessels$length_meters[c(out1, out2, out3)],
+       y = vessels$max_speed_knots[c(out1, out2, out3)],
+       pch = 16,
+       cex = 1.1,
+       col = "red")
+```
+
+There may be three outliers((`r vessels$length_meters[out1]`, `r vessels$max_speed_knots[out1]`), (`r vessels$length_meters[out2]`, `r vessels$max_speed_knots[out2]`), (`r vessels$length_meters[out3]`, `r vessels$max_speed_knots[out3]`)), which are highlighted in red. If they are removed...
+
+```{r remove outliers, comment = NA}
+# Remove outliers
+vessels2 <- vessels[-c(out1, out2, out3),]
+
+# Refit data
+fit2 <- lm(vessels2$max_speed_knots ~ vessels2$length_meters)
+
+fit2$coefficients
+```
+
+... the intercept reduces and the slope slightly increases.
+
+```{r replot, echo = FALSE, fig.height = 4}
+plot(vessels$max_speed_knots ~ vessels$length_meters, 
+     main = "Vessel Length and Maximum Speed", 
+     xlab = "Vessel Length (m)",
+     ylab = "Maximum Speed (knots)")
+
+points(x = vessels$length_meters[c(out1, out2, out3)],
+       y = vessels$max_speed_knots[c(out1, out2, out3)],
+       pch = 16,
+       cex = 1.1,
+       col = "red")
+
+abline(fit1)
+abline(fit2, 
+       col = "red")
+
+legend("bottomright",
+       legend = c("Fit with Outliers",
+                  "Fit without Outliers"),
+       col = c("black",
+               "red"),
+       lwd = 1)
+```
+
+*b. Use this model (all the data included) to predict the maximum vessel speed for a vessel that is 100 m in length. What is the confidence interval? What is the prediction interval?*
+
+```{r 1b, comment = NA, warning = FALSE, message = FALSE}
+est <- unname(fit1$coefficients[1]+100*fit1$coefficients[2])
+
+# Get summary of confidence interval
+CI <- summary(predict(fit1, 
+                      newdata = (data.frame(length_meters = 100)), 
+                      interval = "confidence"))
+
+# Select the upper and lower mean (4th row, 2nd and 3rd columns of table), split
+# it from its label, and assign to numeric to remove floating spaces
+llCI <- as.numeric(strsplit(CI[4,2], split = ":")[[1]][2])
+ulCI <- as.numeric(strsplit(CI[4,3], split = ":")[[1]][2])
+
+# Get summary of prediction interval
+PI <- summary(predict(fit1, 
+                      newdata = (data.frame(length_meters = 100)), 
+                      interval = "prediction"))
+
+# Select the upper and lower mean (4th row, 2nd and 3rd columns of table), split
+# it from its label, and assign to numeric to remove floating spaces
+llPI <- as.numeric(strsplit(PI[4,2], split = ":")[[1]][2])
+ulPI <- as.numeric(strsplit(PI[4,3], split = ":")[[1]][2])
+```
+
+The predicted speed of a vessel 100 meters long is `r round(est, digits = 2)` knots with a confidence interval of (`r llCI`, `r ulCI`) and a prediction interval of (`r llPI`, `r ulPI`).
+
+*c. Use the ‘lm’ function to fit the following linear regression model: $MaxSpeed \sim EnginePower$. Report the results and plot the data and best fit lines.*
+
+```{r 1c, comment = NA}
+fit3 <- lm(vessels$max_speed_knots ~ vessels$engine_power_kW)
+
+fit3$coefficients
+```
+
+```{r 1c plot, echo = FALSE, fig.height = 4}
+plot(vessels$max_speed_knots ~ vessels$engine_power_kW, 
+     main = "Vessel Engine Power and Maximum Speed", 
+     xlab = "Vessel Engine Power (kW)",
+     ylab = "Maximum Speed (knots)")
+
+abline(fit3)
+```
+
+*d. Which covariate “Length” or “EnginePower” explains more of the variation in maximum vessel speed?* 
+
+Length explains more of of variation in maximum vessel speed because its linear model's mean squared error is smaller than the linear model for EnginePower.
+
+```{r 1d, comment = NA}
+# Sum of squares for the EnginePower model
+mean(fit3$residuals^2)
+
+# Sum of squares for the Length model
+mean(fit1$residuals^2)
+```
+
+*e. Use the ‘lm’ function to fit the following linear regression model: $ln(MaxSpeed) \sim ln(Length)$. Report the results and plot the data and the best-fit line.*
+
+```{r 1e, comment = NA}
+fit4 <- lm(log(vessels$max_speed_knots) ~ log(vessels$engine_power_kW))
+
+fit4$coefficients
+```
+
+```{r 1e plot, echo = FALSE, fig.height = 4}
+plot(log(vessels$max_speed_knots) ~ log(vessels$engine_power_kW), 
+     main = "Log Vessel Engine Power and Log Maximum Speed", 
+     xlab = "Log Vessel Engine Power (kW)",
+     ylab = "Log Maximum Speed (knots)")
+
+abline(fit4)
+```
+
+\newpage
+
+#### Step 2
+
+*Write a function to calculate the negative log likelihood associated with fitting the linear regression model MaxSpeed~Length. (Hint: Your function will need to take as inputs the intercept ($\beta_0$), the slope ($\beta_1$), and the variance ($\sigma^2$).) (For full credit, use the ‘dnorm’ function.)*
+
+```{r 2 function}
+# Clean data of NAs for future work
+vessels <- na.omit(data.frame("length_meters" = vessels$length_meters, 
+                              "max_speed_knots" = vessels$max_speed_knots))
+
+# Based on what was said in Slack
+# y is the response variable
+# x is the covariate
+# params is a vector of parameters, beta0, beta1, and sigma
+neg.ll.lm <- function(y, x, params){
+        # Assign parameters to their labels
+        beta0 <- params[1]
+        beta1 <- params[2]
+        sigma <- params[3]
+        
+        # Calculate the predicted y value of an x using the parameters
+        yhat <- beta0 + beta1*x
+        
+        # Produce the value with some level of randomness using dnorm()
+        -sum(dnorm(y, 
+                   mean = yhat, 
+                   sd = sigma,
+                   log = TRUE)
+             )
+}
+```
+*Using the ‘optim’ function in R, minimize the negative log-likelihood to obtain the maximum likelihood regression parameter estimates for $\beta_0$, $\beta_1$, $\sigma^2$. (Hint: You will need starting values for optim; the results of the ‘lm’ calculation would be reasonable starting points.)*
+
+```{r 2 optim}
+# Optimize over the data using the values from the original fit
+MLE <- optim(par = c(fit1$coefficients[1], 
+                     fit1$coefficients[2],
+                     sigma(fit1)),
+             fn = neg.ll.lm,
+             y = vessels$max_speed_knots,
+             x = vessels$length_meters)
+
+# Produced object with three values in the par, corresponding to the optimal 
+# beta0, beta1, and sigma
+```
+
+The optimized linear regression is $\hat{y}=$ `r round(MLE$par[1], digits = 2)` $+$ `r round(MLE$par[2], digits = 3)` $x$. 
+
