@@ -48,13 +48,13 @@ library(minpack.lm)
 
 *Over the last week, I participated in Biometry in the following ways:*
 
-- I asked / answered **iii** questions posed in class.
+- I asked / answered **3** questions posed in class.
 
-- I asked **0** questions in Slack.
+- I asked **1** questions in Slack.
 
 - I answered **0** questions posed by other students on Slack.
 
-- I came to Heather's office hours: **No**
+- I came to Heather's office hours: **Yes**
 
 - I came to Jose's office hours: **No**
 
@@ -70,6 +70,9 @@ library(minpack.lm)
 
 *Any topics from last week that you are still confused about?*
 
+> More of a coding thing than a math thing, but I was struggling to find certain values within the glm() objects and the like. How would I find that median that I used as a start value vs just copying and pasting the numerical value? 
+
+> Also, since we're going to be needing it soon, how on earth do nested for-loops work. I truely cannot wrap my head around it. 
 
 \newpage
 
@@ -78,7 +81,6 @@ library(minpack.lm)
 ### Part I
 
 *Fill out the following table.*
-#### table
 
 +-------------------------------------------+------------+--------------------------------------------------------------------+-------------------------------------------+-------------------------------------------------------------------+
 | Test                                      | $H_0$      | Test Statistic T                                                   | $f(T\mid H_0)$                            | Assumptions                                                       |
@@ -111,16 +113,15 @@ nyData$Uninfected <- 19540000-nyData$CaseCumSum
 # Remove February 29 data ("Day 0") and reset March 1 to Day 0
 nyData <- nyData[-1,]
 nyData$Day <- nyData$Day-1
-
-head(nyData)
 ```
 
+\newpage
 *a. Plot the number of cumulative cases as a function of Day.*
 
 ```{r 2a, echo = FALSE}
 plot(CaseCumSum ~ Day, 
      data = nyData,
-     main = "Cumulative COVID-19 Cases Since March 1, 2022 in New York State",
+     main = "Cumulative COVID-19 Cases in New York State",
      ylab = "Cumulative COVID-19 Cases",
      xlab = "Days Since March 1, 2022",
      pch = 16)
@@ -168,6 +169,7 @@ fit2 <- nls(CaseCumSum ~ a*exp(b*exp(c*Day)),
            )
 ```
 
+\newpage
 *Write a script to construct the 95th percentile confidence intervals using the following bootstrap technique (this is a bit of a hack, but one is often left with no choice but to get creative...):*
 
 1. *sample with replacement from the residuals of the original ‘nls’ fit*
@@ -187,74 +189,198 @@ fit2 <- nls(CaseCumSum ~ a*exp(b*exp(c*Day)),
 *(Notice that your CI for $ae^{be^{cx}} will no longer be a smooth function! Also, you might find that inside your bootstrap loop, you are getting errors and this is causing the loop to abort with an error. This is happening because there will be times when, by random chance, the bootstrapped datasets will be hard to fit, and nls() will fail to converge. To avoid having an error on one iteration cause the whole loop to abort with an error, wrap the entire line of code with nls in the try() function. This will prevent an error from causing the loop to abort with an error. For more details, look at the help file ?try.)*
 
 ```{r 2d}
-# # Define number of iterations
-# nit <- 1000
-# 
-# # Define the matrices into which residual bootstrap samples 
-# # will be stored, and the matrix into which the nls() results will be 
-# # stored
-# 
-# boot <- matrix(data = NA, 
-#                nrow = nit, 
-#                ncol = length(fit1$residuals),
-#                dimnames = list(c(1:nit),
-#                                c(1:length(fit1$residuals))))
-# 
-# est <- matrix(data = NA,
-#               nrow = nit,
-#               ncol = 3,
-#               dimnames = list(c(1:nit),
-#                               c("a^star", "b^star", "c^star")))
-# 
-# for (i in 1:nit) {
-#         boot[i,] <- sample(x = fit1$residuals,
-#                           size = length(fit1$residuals),
-#                           replace = TRUE
-#                           )
-#         
-#         fitk <- nls(CaseCumSum ~ a*exp(b*exp(c*Day)), 
-#                     data = nyData,
-#                     start = list(a = aStart, 
-#                                  b = bStart, 
-#                                  c = cStart)
-#                  )
-#         est[i,1]
-#         
-#         }
+# Define number of iterations
+nit <- 1000
 
+# Define the matrices into which residual bootstrap samples and the nls() results 
+# will be stored
+boot <- matrix(data = NA,
+               nrow = nit,
+               ncol = length(fit1$residuals),
+               dimnames = list(c(1:nit),
+                               c(1:length(fit1$residuals))
+                               )
+               )
+
+abcEst<- matrix(data = NA,
+                nrow = nit,
+                ncol = 3,
+                dimnames = list(c(1:nit),
+                                c("a^star", "b^star", "c^star")
+                                )
+                )
+
+bootPred <- matrix(data = NA,
+                   nrow = length(nyData$Day),
+                   ncol = nit,
+                   dimnames = list(c(1:length(nyData$Day)),
+                                   c(1:nit))
+                   )
+
+# Run bootstrap
+for (i in 1:nit) {
+    # Resample the residuals from fit1
+        boot[i,] <- sample(x = fit1$residuals,
+                          size = length(fit1$residuals),
+                          replace = TRUE
+                          )
+    # Add those resampled residuals to the original cumulative case data into a 
+    # dataframe
+        temp <- data.frame(cbind(nyData$Day,
+                                 boot[i,]+nyData$CaseCumSum)
+                           )
+    # Run nls() again using the a, b, and c starts from before
+        temp <- try(nls(X2 ~ a*exp(b*exp(c*X1)),
+                        data = temp,
+                        start = list(a = aStart,
+                                     b = bStart,
+                                     c = cStart)
+                        )
+        )
+    # Save a, b, and c values
+        abcEst[i,] <- rbind(temp$m$getPars())
+    # Get the predicted Y values for each iteration of the new a, b, and c estimates
+        bootPred[,i] <- abcEst[i,1]*exp(abcEst[i,2]*exp(abcEst[i,3]*nyData$Day))
+}
+
+# Get the 95% confidence intervals, upper, middle, and lower
+nyCIBands2 <- matrix(data = NA,
+                    nrow = length(nyData$Day),
+                    ncol = 3,
+                    dimnames = list(c(1:length(nyData$Day)),
+                                    c("lwr", "fit", "upr"))
+                    )
+
+for (i in 1:33) {
+        nyCIBands2[i,] <- quantile(bootPred[i,], c(0.025, 0.5, 0.975))
+}
 ```
 
-```{r 2d plot, echo = FALSE, fig.height=10}
+\newpage
+*d. Plot the two best-fit curves on top of the plot from (A) and their 95th percentile confidence intervals.* 
+```{r 2d plot, echo = FALSE}
 plot(CaseCumSum ~ Day, 
      data = nyData,
-     main = "Cumulative COVID-19 Cases Since March 1, 2022 in New York State",
+     main = "Cumulative COVID-19 Cases in New York State",
      ylab = "Cumulative COVID-19 Cases",
-     xlab = "Days Since March 1, 2022",
-     pch = 16)
+     xlab = "Days Since March 1, 2022"
+     )
 
 # Fit line
 lines(newData[,1],
       inv.logit(nyCIBands$fit)*19540000,
-      col = "purple",
+      col = "#333FFF",
       lwd = 2)
 
 # Get CI upper bounds
 lines(newData[,1],
       inv.logit(nyCIBands$fit+1.96*nyCIBands$se.fit)*19540000,
-      col = "purple",
+      col = "#666FFF",
       lwd = 2,
       lty = 2)
 
 # Get CI lower bounds
 lines(newData[,1],
       inv.logit(nyCIBands$fit-1.96*nyCIBands$se.fit)*19540000,
-      col = "purple",
+      col = "#666FFF",
       lwd = 2,
       lty = 2)
 
 # Plot Gompertz curve
 lines(newData[,1],
       fitted(fit2),
-      col = "blue",
+      col = "#006633",
       lwd = 2)
+
+# Get CI upper bounds
+lines(newData[,1],
+      nyCIBands2[,"upr"],
+      col = "#339966",
+      lwd = 2,
+      lty = 2)
+
+# Get CI lower bounds
+lines(newData[,1],
+      nyCIBands2[,"lwr"],
+      col = "#339966",
+      lwd = 2,
+      lty = 2)
+
+# Get legend
+legend("topleft",
+       c("Logistic Regression", 
+         "95% Confidence Interval", 
+         "Binomial Regression", 
+         "95% Confidence Interval"),
+       lwd = 2,
+       lty = c(1,2,1,2),
+       col = c("#333FFF", "#666FFF", "#006633", "#339966"))
+```
+
+*e. Which model fits better and why? (There may be more than one correct answer depending on the metric used; I’m just interested in seeing you justify your decision in a reasonable way.)*
+
+I believe that the Gompertz model fits the data better because it captures the shape more accurately (the shallow slope followed by a non-exponential increase and a tapering at the end). Though the glm() produced fit has an incredibly small confidence interval, it's not due to the quality of the fit to the data, but rather due to the fact that that model is the best R can possibly do (as said by Heather in office hours).
+
+*e. What is the difference between the interpretation of a confidence interval and that of a prediction interval?*
+
+The confidence interval is the range of response values in which we are 95% confident that the true response value lies, while the prediction interval is the range of response values that are expected given a new observation. 
+
+\newpage
+
+### Bonus
+
+*Re-do Part B using a Poisson regression. Note that in this case, the Binomial model is more "correct", since there are only so many New Yorkers and each one of them either caught Covid or didn't. (Each person represents a Bernoulli, and collectively, they represent a Binomial.) However, at this point in the epidemic, Covid was still very rare, and so the number of cases is a tiny fraction of the total number of people and so a Poisson model could be used in this case. (This is a situation where we might opt for one model even though we know it can't be correct strictly speaking.) I am curious how the Poisson model fits and so will offer up 5 bonus points for anyone who redoes part B (all parts of B) with a Poisson.*
+
+
+```{r bonus, comment = NA}
+# Get Poisson regression, taking inspiration from
+# https://www.dataquest.io/blog/tutorial-poisson-regression-in-r/
+fit3 <- glm(CaseCumSum ~ Day,
+            data = nyData,
+            family = poisson(link = "log"))
+
+summary(fit3)
+
+# Calculate confidence interval bands
+nyCIBands3 <- predict.glm(fit3,
+                          newData,
+                          se.fit = TRUE)
+```
+
+```{r bonus plot, echo = FALSE}
+plot(CaseCumSum ~ Day, 
+     data = nyData,
+     main = "Cumulative COVID-19 Cases in New York State",
+     ylab = "Cumulative COVID-19 Cases",
+     xlab = "Days Since March 1, 2022",
+     pch = 16)
+
+# Fit line
+lines(newData[,1],
+      fit3$fitted.values,
+      col = "#660099",
+      lwd = 2)
+
+# Get CI upper bounds
+lines(newData[,1],
+      fit3$fitted.values+1.96*nyCIBands3$se.fit,
+      col = "#9933CC",
+      lwd = 2,
+      lty = 2)
+
+# Get CI lower bounds
+lines(newData[,1],
+      fit3$fitted.values-1.96*nyCIBands3$se.fit,
+      col = "#9933CC",
+      lwd = 2,
+      lty = 2)
+
+# Get legend
+legend("topleft",
+       c("Poisson Regression", 
+         "95% Confidence Interval"),
+       lwd = 2,
+       lty = c(1,2),
+       col = c("#660099", "#9933CC"))
+
 ```
